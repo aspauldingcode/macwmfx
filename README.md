@@ -1,20 +1,30 @@
-# StopStoplightLight
+# macwmfx
 
 ![Preview](Preview.png)
 
 # Information:
+- macwmfx is a MacForge (SIMBL) plugin that enables configurable WindowManager Effects to macOS, similar to what swayfx does for sway on linux.
+- Authored by [aspauldingcode](https://github.com/aspauldingcode)
+- Inspired by [INTrafficLightsDisabler](https://github.com/indragiek/INTrafficLightsDisabler) and [StopStoplightLight](https://github.com/shishkabibal/StopStoplightLight)
 
-- StopStoplightLight is a MacForge (SIMBL) plugin that hides NSWindow's traffic light buttons
-- Tested on Apple silicon macOS 14.1
-- Authored by [shishkabibal](https://github.com/shishkabibal)
-- Inspired by [INTrafficLightsDisabler](https://github.com/indragiek/INTrafficLightsDisabler)
+# Features:
+- Configurable windowfx dotfile in ~/.config/macwmfx/config
+- Disable Titlebars
+- Disable Traffic Lights
+- Disable Window Shadows
+- Disable Window Resize Constraints (resize almost all windows to any size)
+- Enable Window Blur (configure blur radius and passes)
+- Enable Window Transparency
+- Border Outline (active/inactive), Border Width
+- **Border Corner Radius** - This one is special.
+- Whitelist applications by bundle identifier
+- Blacklist applications by bundle identifier
 
 # Installation:
-
 1. Download [MacForge Apple silicon beta](https://github.com/jslegendre/appcast/raw/master/Beta/MacForge/MacForge.1.2.2-3.zip)
-2. Download [StopStoplightLight](https://github.com/shishkabibal/StopStoplightLight/releases/latest)
+2. Download [macwmfx](https://github.com/aspauldingcode/macwmfx/releases/latest)
 3. Unzip both downloads
-4. Open `StopStoplightLight.bundle` with `MacForge.app`
+4. Open `macwmfx.bundle` with `MacForge.app`
 5. Restart computer
 
 ### Appeal:

@@ -1,16 +1,16 @@
 //
-//  NSWindow+StopStoplightLight.h
-//  StopStoplightLight
+//  NSWindow+macwmfx.h
+//  macwmfx
 //
-//  Created by Brian "Shishkabibal" on 6/25/24.
-//  Copyright (c) 2024 Brian "Shishkabibal". All rights reserved.
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
 #import <AppKit/AppKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSWindow (StopStoplightLight)
+@interface NSWindow (macwmfx)
 
 + (NSWindow *)topWindow;
 - (void)setCGWindowLevel:(CGWindowLevel)level;
@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface StopStoplightLight : NSObject
+@interface macwmfx : NSObject
 
 + (instancetype)sharedInstance;
 

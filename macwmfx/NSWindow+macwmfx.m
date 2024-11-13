@@ -1,23 +1,23 @@
 //
-//  NSWindow+StopStoplightLight.m
-//  StopStoplightLight
+//  NSWindow+macwmfx.m
+//  macwmfx
 //
-//  Created by Brian "Shishkabibal" on 6/25/24.
-//  Copyright (c) 2024 Brian "Shishkabibal". All rights reserved.
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
 #pragma mark - Library/Header Imports
 
 #import <objc/runtime.h>
 #import "ZKSwizzle.h"
-#import "NSWindow+StopStoplightLight.h"
+#import "NSWindow+macwmfx.h"
 
 #include <os/log.h>
-#define DLog(N, ...) os_log_with_type(os_log_create("com.shishkabibal.StopStoplightLight", "DEBUG"), OS_LOG_TYPE_DEFAULT, N, ##__VA_ARGS__)
+#define DLog(N, ...) os_log_with_type(os_log_create("com.aspauldingcode.macwmfx", "DEBUG"), OS_LOG_TYPE_DEFAULT, N, ##__VA_ARGS__)
 
 #include <objc/message.h>
 
-@implementation NSWindow (StopStoplightLight)
+@implementation NSWindow (macwmfx)
 
 + (NSWindow *)topWindow {
     NSWindow *window = [NSApp mainWindow];

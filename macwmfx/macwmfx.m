@@ -1,29 +1,29 @@
 //
-//  StopStoplightLight.m
-//  StopStoplightLight
+//  macwmfx.m
+//  macwmfx
 //
-//  Created by Brian "Shishkabibal" on 6/25/24.
-//  Copyright (c) 2024 Brian "Shishkabibal". All rights reserved.
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
 #pragma mark - Library/Header Imports
 
 @import AppKit;
 @import QuartzCore;
-#import "NSWindow+StopStoplightLight.h"
+#import "NSWindow+macwmfx.h"
 #import "ZKSwizzle.h"
 #import <objc/runtime.h>
 
 #include <os/log.h>
 #define DLog(N, ...)                                                           \
   os_log_with_type(                                                            \
-      os_log_create("com.shishkabibal.StopStoplightLight", "DEBUG"),           \
+      os_log_create("com.aspauldingcode.macwmfx", "DEBUG"),           \
       OS_LOG_TYPE_DEFAULT, N, ##__VA_ARGS__)
 
 #pragma mark - Global Variables
 
 static NSString *const preferencesSuiteName =
-    @"com.shishkabibal.StopStoplightLight";
+    @"com.aspauldingcode.macwmfx";
 
 // Feature flags
 static BOOL enableTrafficLightsDisabler;
@@ -33,16 +33,16 @@ static BOOL enableWindowBorders;
 
 #pragma mark - Main Implementation
 
-@interface StopStoplightLight ()
+@interface macwmfx ()
 
 + (NSDictionary *)loadConfig;
 
 @end
 
-@implementation StopStoplightLight
+@implementation macwmfx
 
 + (instancetype)sharedInstance {
-  static StopStoplightLight *sharedInstance = nil;
+  static macwmfx *sharedInstance = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     sharedInstance = [[self alloc] init];
@@ -242,7 +242,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [StopStoplightLight loadConfig];
+    NSDictionary *config = [macwmfx loadConfig];
     CGFloat borderWidth = [self borderWidthFromConfig:config];
     CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
     NSColor *activeColor = [self activeColorFromConfig:config];
@@ -371,7 +371,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [StopStoplightLight loadConfig];
+    NSDictionary *config = [macwmfx loadConfig];
     CGFloat cornerRadius = [self cornerRadiusFromConfig:config];
     CGFloat borderWidth = [self borderWidthFromConfig:config];
 
@@ -413,7 +413,7 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         return;
     }
 
-    NSDictionary *config = [StopStoplightLight loadConfig];
+    NSDictionary *config = [macwmfx loadConfig];
     NSColor *activeColor = [self activeColorFromConfig:config];
     NSColor *inactiveColor = [self inactiveColorFromConfig:config];
 

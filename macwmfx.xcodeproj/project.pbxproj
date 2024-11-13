@@ -8,21 +8,21 @@
 
 /* Begin PBXBuildFile section */
 		D388E75D2093868300441C31 /* ZKSwizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E7592093868300441C31 /* ZKSwizzle.m */; };
-		D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E75B2093868300441C31 /* StopStoplightLight.m */; };
+		D388E75E2093868300441C31 /* macwmfx.m in Sources */ = {isa = PBXBuildFile; fileRef = D388E75B2093868300441C31 /* macwmfx.m */; };
 		D3B2DA622B2A000B006AA5E0 /* Icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = D3B2DA612B2A000B006AA5E0 /* Icon.icns */; };
-		FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */; };
+		FAA8D22F2CAE4E1800D22F47 /* NSWindow+macwmfx.m in Sources */ = {isa = PBXBuildFile; fileRef = FAA8D22E2CAE4E0D00D22F47 /* NSWindow+macwmfx.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D37795A62C2B80AF0007CA4F /* NSWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSWindow.h; sourceTree = "<group>"; };
-		D388E74F2093866B00441C31 /* StopStoplightLight.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StopStoplightLight.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		D388E74F2093866B00441C31 /* macwmfx.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = macwmfx.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		D388E7522093866B00441C31 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D388E7592093868300441C31 /* ZKSwizzle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZKSwizzle.m; sourceTree = "<group>"; };
 		D388E75A2093868300441C31 /* ZKSwizzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZKSwizzle.h; sourceTree = "<group>"; };
-		D388E75B2093868300441C31 /* StopStoplightLight.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StopStoplightLight.m; sourceTree = "<group>"; };
+		D388E75B2093868300441C31 /* macwmfx.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = macwmfx.m; sourceTree = "<group>"; };
 		D3B2DA612B2A000B006AA5E0 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
-		FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSWindow+StopStoplightLight.h"; sourceTree = "<group>"; };
-		FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+StopStoplightLight.m"; sourceTree = "<group>"; };
+		FAA8D22C2CAE4DD900D22F47 /* NSWindow+macwmfx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSWindow+macwmfx.h"; sourceTree = "<group>"; };
+		FAA8D22E2CAE4E0D00D22F47 /* NSWindow+macwmfx.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+macwmfx.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +39,7 @@
 		D388E7462093866B00441C31 = {
 			isa = PBXGroup;
 			children = (
-				D388E7512093866B00441C31 /* StopStoplightLight */,
+				D388E7512093866B00441C31 /* macwmfx */,
 				D388E7502093866B00441C31 /* Products */,
 				D3F2EA232B2535D100FE807F /* Frameworks */,
 			);
@@ -48,21 +48,21 @@
 		D388E7502093866B00441C31 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D388E74F2093866B00441C31 /* StopStoplightLight.bundle */,
+				D388E74F2093866B00441C31 /* macwmfx.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D388E7512093866B00441C31 /* StopStoplightLight */ = {
+		D388E7512093866B00441C31 /* macwmfx */ = {
 			isa = PBXGroup;
 			children = (
 				D388E7582093868300441C31 /* ZKSwizzle */,
-				D388E75B2093868300441C31 /* StopStoplightLight.m */,
-				FAA8D22E2CAE4E0D00D22F47 /* NSWindow+StopStoplightLight.m */,
+				D388E75B2093868300441C31 /* macwmfx.m */,
+				FAA8D22E2CAE4E0D00D22F47 /* NSWindow+macwmfx.m */,
 				D3F2E9802B25024F00FE807F /* Headers */,
 				D3F2E97E2B25021000FE807F /* Resources */,
 			);
-			path = StopStoplightLight;
+			path = macwmfx;
 			sourceTree = "<group>";
 		};
 		D388E7582093868300441C31 /* ZKSwizzle */ = {
@@ -86,7 +86,7 @@
 		D3F2E9802B25024F00FE807F /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				FAA8D22C2CAE4DD900D22F47 /* NSWindow+StopStoplightLight.h */,
+				FAA8D22C2CAE4DD900D22F47 /* NSWindow+macwmfx.h */,
 				D37795A62C2B80AF0007CA4F /* NSWindow.h */,
 			);
 			name = Headers;
@@ -102,9 +102,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D388E74E2093866B00441C31 /* StopStoplightLight */ = {
+		D388E74E2093866B00441C31 /* macwmfx */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D388E7552093866B00441C31 /* Build configuration list for PBXNativeTarget "StopStoplightLight" */;
+			buildConfigurationList = D388E7552093866B00441C31 /* Build configuration list for PBXNativeTarget "macwmfx" */;
 			buildPhases = (
 				D388E74B2093866B00441C31 /* Sources */,
 				D388E74C2093866B00441C31 /* Frameworks */,
@@ -114,9 +114,9 @@
 			);
 			dependencies = (
 			);
-			name = StopStoplightLight;
+			name = macwmfx;
 			productName = WriteReceipt;
-			productReference = D388E74F2093866B00441C31 /* StopStoplightLight.bundle */;
+			productReference = D388E74F2093866B00441C31 /* macwmfx.bundle */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -127,7 +127,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1510;
-				ORGANIZATIONNAME = Shishkabibal;
+				ORGANIZATIONNAME = aspauldingcode;
 				TargetAttributes = {
 					D388E74E2093866B00441C31 = {
 						CreatedOnToolsVersion = 9.3;
@@ -148,7 +148,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D388E74E2093866B00441C31 /* StopStoplightLight */,
+				D388E74E2093866B00441C31 /* macwmfx */,
 			);
 		};
 /* End PBXProject section */
@@ -169,8 +169,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FAA8D22F2CAE4E1800D22F47 /* NSWindow+StopStoplightLight.m in Sources */,
-				D388E75E2093868300441C31 /* StopStoplightLight.m in Sources */,
+				FAA8D22F2CAE4E1800D22F47 /* NSWindow+macwmfx.m in Sources */,
+				D388E75E2093868300441C31 /* macwmfx.m in Sources */,
 				D388E75D2093868300441C31 /* ZKSwizzle.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -330,10 +330,10 @@
 				INFOPLIST_FILE = StopStoplightLight/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Application Support/MacEnhance/Plugins";
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.shishkabibal.StopStoplightLight;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aspauldingcode.macwmfx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "StopStoplightLight/StopStoplightLight-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "macwmfx/macwmfx-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
@@ -359,15 +359,15 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/StopStoplightLight",
+					"$(PROJECT_DIR)/macwmfx",
 				);
-				INFOPLIST_FILE = StopStoplightLight/Info.plist;
+				INFOPLIST_FILE = macwmfx/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Application Support/MacEnhance/Plugins";
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.shishkabibal.StopStoplightLight;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aspauldingcode.macwmfx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "StopStoplightLight/StopStoplightLight-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "macwmfx/macwmfx-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -380,7 +380,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D388E74A2093866B00441C31 /* Build configuration list for PBXProject "StopStoplightLight" */ = {
+		D388E74A2093866B00441C31 /* Build configuration list for PBXProject "macwmfx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D388E7532093866B00441C31 /* Debug */,
@@ -389,7 +389,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D388E7552093866B00441C31 /* Build configuration list for PBXNativeTarget "StopStoplightLight" */ = {
+		D388E7552093866B00441C31 /* Build configuration list for PBXNativeTarget "macwmfx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D388E7562093866B00441C31 /* Debug */,
