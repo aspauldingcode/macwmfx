@@ -1,12 +1,12 @@
-# Makefile to build the StopStoplightLight plugin using xcodebuild
+# Makefile to build the macwmfx plugin using xcodebuild
 
 # Directories
-PROJECT_DIR = StopStoplightLight
+PROJECT_DIR = macwmfx
 BUILD_DIR = build
 INSTALL_DIR = /Library/Application\ Support/MacEnhance/Plugins/
 
 # Target
-TARGET = StopStoplightLight
+TARGET = macwmfx
 
 # Rules
 all: build

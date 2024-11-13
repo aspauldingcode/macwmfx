@@ -126,7 +126,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1510;
+				LastUpgradeCheck = 1610;
 				ORGANIZATIONNAME = aspauldingcode;
 				TargetAttributes = {
 					D388E74E2093866B00441C31 = {
@@ -135,7 +135,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D388E74A2093866B00441C31 /* Build configuration list for PBXProject "StopStoplightLight" */;
+			buildConfigurationList = D388E74A2093866B00441C31 /* Build configuration list for PBXProject "macwmfx" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -182,11 +182,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					"$(ARCHS_STANDARD)",
-					arm64e,
-					x86_64,
-				);
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -251,11 +246,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					"$(ARCHS_STANDARD)",
-					arm64e,
-					x86_64,
-				);
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -312,10 +302,6 @@
 		D388E7562093866B00441C31 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					arm64e,
-					x86_64,
-				);
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -325,11 +311,11 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/StopStoplightLight",
+					"$(PROJECT_DIR)/macwmfx",
 				);
-				INFOPLIST_FILE = StopStoplightLight/Info.plist;
+				INFOPLIST_FILE = macwmfx/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Application Support/MacEnhance/Plugins";
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aspauldingcode.macwmfx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -347,10 +333,6 @@
 		D388E7572093866B00441C31 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					arm64e,
-					x86_64,
-				);
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -363,7 +345,7 @@
 				);
 				INFOPLIST_FILE = macwmfx/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Application Support/MacEnhance/Plugins";
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aspauldingcode.macwmfx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
