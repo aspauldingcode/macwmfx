@@ -37,21 +37,21 @@ extern void CGSSetWindowLevel(int connection, int windowNumber, int level);
 extern int CGSMainConnectionID(void);
 
 - (void)setCGWindowLevel:(CGWindowLevel)level {
-    if ([self attachedSheet]) {
-        [self.attachedSheet setCGWindowLevel:level];
-    }
-    
-    for (NSWindow *childWindow in [self childWindows]) {
-        [childWindow setCGWindowLevel:level];
-    }
-    
+    [self applyToAllWindows:^(NSWindow *window) {
+        [window setCGWindowLevel:level];
+    }];
     CGSSetWindowLevel(CGSMainConnectionID(), (unsigned int)[self windowNumber], level);
 }
 
 - (void)hideTrafficLights {
-    [self hideButton:[self standardWindowButton:NSWindowCloseButton]];
-    [self hideButton:[self standardWindowButton:NSWindowMiniaturizeButton]];
-    [self hideButton:[self standardWindowButton:NSWindowZoomButton]];
+    NSArray *buttons = @[
+        [self standardWindowButton:NSWindowCloseButton],
+        [self standardWindowButton:NSWindowMiniaturizeButton],
+        [self standardWindowButton:NSWindowZoomButton]
+    ];
+    [self applyToButtons:buttons action:^(NSButton *button) {
+        button.hidden = YES;
+    }];
 }
 
 - (void)modifyTitlebarAppearance {
@@ -67,8 +67,19 @@ extern int CGSMainConnectionID(void);
     [self setMaxSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
 }
 
-- (void)hideButton:(NSButton *)button {
-    button.hidden = YES;
+- (void)applyToAllWindows:(void (^)(NSWindow *window))action {
+    if ([self attachedSheet]) {
+        action(self.attachedSheet);
+    }
+    for (NSWindow *childWindow in [self childWindows]) {
+        action(childWindow);
+    }
+}
+
+- (void)applyToButtons:(NSArray<NSButton *> *)buttons action:(void (^)(NSButton *button))action {
+    for (NSButton *button in buttons) {
+        action(button);
+    }
 }
 
 @end
