@@ -58,24 +58,43 @@ install: $(BUILD_DIR)/$(DYLIB_NAME)
 
 # Test target that builds, installs, and relaunches test applications
 test: install
-	@echo "Quitting test applications..."
-	@killall "Spotify" 2>/dev/null || true
-	@killall "System Settings" 2>/dev/null || true
-	@killall "Chess" 2>/dev/null || true
-	@killall "LibreOffice" 2>/dev/null || true
-	@killall "Brave Browser" 2>/dev/null || true
-	@killall "Beeper" 2>/dev/null || true
-	@killall "Safari" 2>/dev/null || true
-	@killall "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
-	@echo "Relaunching test applications..."
-	@open -a "Spotify"
-	@open -a "System Settings"
-	@open -a "Chess"
-	@open -a "LibreOffice"
-	@open -a "Brave Browser"
-	@open -a "Beeper"
-	@open -a "Safari"
-	@echo "Test applications relaunched"
+	@echo "Force quitting test applications..."
+	@pkill -9 "Spotify" 2>/dev/null || true
+	@pkill -9 "System Settings" 2>/dev/null || true
+	@pkill -9 "Chess" 2>/dev/null || true
+	@pkill -9 "LibreOffice" 2>/dev/null || true
+	@pkill -9 "Brave Browser" 2>/dev/null || true
+	@pkill -9 "Beeper" 2>/dev/null || true
+	@pkill -9 "Safari" 2>/dev/null || true
+	@pkill -9 "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
+	@echo "Restarting ammonia injector..."
+	@sudo pkill -9 ammonia || true
+	@sleep 2
+	@sudo launchctl bootout system /Library/LaunchDaemons/com.bedtime.ammonia.plist 2>/dev/null || true
+	@sleep 2
+	@sudo launchctl bootstrap system /Library/LaunchDaemons/com.bedtime.ammonia.plist
+	@sleep 2
+	@echo "Ammonia injector restarted"
+	@echo "Waiting for system to stabilize..."
+	@sleep 5
+	@echo "Launching test applications..."
+	@open -a "Spotify" || echo "Failed to open Spotify"
+	@sleep 1
+	@open -a "System Settings" || echo "Failed to open System Settings"
+	@sleep 1
+	@open -a "Chess" || echo "Failed to open Chess"
+	@sleep 1
+	@open -a "LibreOffice" || echo "Failed to open LibreOffice"
+	@sleep 1
+	@open -a "Brave Browser" || echo "Failed to open Brave Browser"
+	@sleep 1
+	@open -a "Beeper" || echo "Failed to open Beeper"
+	@sleep 1
+	@open -a "Safari" || echo "Failed to open Safari"
+	@sleep 1
+	@echo "Test applications launched"
+	@echo "Checking logs..."
+	@log show --predicate 'subsystem == "com.aspauldingcode.macwmfx"' --debug --last 5m || true
 
 # Clean build files
 clean:

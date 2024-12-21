@@ -65,3 +65,6 @@ fastlane/test_output
 
 iOSInjectionProject/
 .DS_Store
+
+# Custom folder to ignore
+StopStoplightLight/
