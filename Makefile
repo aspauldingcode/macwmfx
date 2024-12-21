@@ -62,7 +62,7 @@ test: install
 	@pkill -9 "Spotify" 2>/dev/null || true
 	@pkill -9 "System Settings" 2>/dev/null || true
 	@pkill -9 "Chess" 2>/dev/null || true
-	@pkill -9 "LibreOffice" 2>/dev/null || true
+	@pkill -9 "soffice" 2>/dev/null || true
 	@pkill -9 "Brave Browser" 2>/dev/null || true
 	@pkill -9 "Beeper" 2>/dev/null || true
 	@pkill -9 "Safari" 2>/dev/null || true
