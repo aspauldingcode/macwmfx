@@ -1,0 +1,6 @@
+framework module macwmfx {
+    umbrella header "NSWindow+macwmfx.h"
+    
+    export *
+    module * { export * }
+} 

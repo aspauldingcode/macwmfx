@@ -440,3 +440,9 @@
     }
 
     @end
+
+    __attribute__((constructor))
+    static void macwmfx_initialize(void) {
+        // Initialization code here
+        [macwmfx sharedInstance];
+    }

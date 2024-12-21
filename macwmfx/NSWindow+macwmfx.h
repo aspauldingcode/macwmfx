@@ -8,11 +8,18 @@
 
 #import <AppKit/AppKit.h>
 
+// Add visibility macros for dylib
+#ifdef __cplusplus
+#define MACWMFX_EXPORT extern "C" __attribute__((visibility("default")))
+#else
+#define MACWMFX_EXPORT __attribute__((visibility("default")))
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface NSWindow (macwmfx)
 
-+ (NSWindow *)topWindow;
+MACWMFX_EXPORT NSWindow* topWindow(void);
 - (void)setCGWindowLevel:(CGWindowLevel)level;
 - (BOOL)isSystemApp;
 - (void)hideTrafficLights;
@@ -26,15 +33,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong, nonatomic, readonly) NSColor *activeWindowColor;
 @property (strong, nonatomic, readonly) NSColor *inactiveWindowColor;
 
-- (void)addBorderToWindow:(NSWindow *)window;
-- (void)removeBorderFromWindow:(NSWindow *)window;
-- (void)updateBorderForWindow:(NSWindow *)window;
+MACWMFX_EXPORT void addBorderToWindow(NSWindow *window);
+MACWMFX_EXPORT void removeBorderFromWindow(NSWindow *window);
+MACWMFX_EXPORT void updateBorderForWindow(NSWindow *window);
 
 @end
 
 @interface macwmfx : NSObject
 
-+ (instancetype)sharedInstance;
+MACWMFX_EXPORT macwmfx* macwmfxSharedInstance(void);
 
 @property (strong, nonatomic, readonly) BordersController *bordersController;
 
