@@ -58,6 +58,8 @@ install: $(BUILD_DIR)/$(DYLIB_NAME)
 
 # Test target that builds, installs, and relaunches test applications
 test: install
+	@echo "Clearing previous logs..."
+	@sudo log erase --all
 	@echo "Force quitting test applications..."
 	@pkill -9 "Spotify" 2>/dev/null || true
 	@pkill -9 "System Settings" 2>/dev/null || true
@@ -94,7 +96,9 @@ test: install
 	@sleep 1
 	@echo "Test applications launched"
 	@echo "Checking logs..."
-	@log show --predicate 'subsystem == "com.aspauldingcode.macwmfx"' --debug --last 5m || true
+	@log show --predicate 'subsystem == "com.aspauldingcode.macwmfx"' --debug --last 5m > test_output.log || true
+	@echo "Checking log for specific entries..."
+	@grep "Loaded" test_output.log || echo "No relevant log entries found."
 
 # Clean build files
 clean:
