@@ -23,10 +23,10 @@ static SEL destinationSelectorForSelector(SEL cmd, Class dst) {
 }
 
 static Class classFromInfo(const char *info) {
-    NSUInteger bracket_index = -1;
+    NSInteger bracket_index = -1;
     for (NSUInteger i = 0; i < strlen(info); i++) {
         if (info[i] == '[') {
-            bracket_index = i;
+            bracket_index = (NSInteger)i;
         }
     }
     bracket_index++;
@@ -186,7 +186,7 @@ static BOOL enumerateMethods(Class destination, Class source) {
     unsigned int methodCount;
     Method *methodList = class_copyMethodList(source, &methodCount);
     BOOL success = YES;
-    for (int i = 0; i < methodCount; i++) {
+    for (unsigned int i = 0; i < methodCount; i++) {
         Method method = methodList[i];
         SEL selector  = method_getName(method);
         NSString *methodName = NSStringFromSelector(selector);
@@ -228,7 +228,7 @@ static BOOL enumerateMethods(Class destination, Class source) {
     
     unsigned int propertyCount;
     objc_property_t *propertyList = class_copyPropertyList(source, &propertyCount);
-    for (int i = 0; i < propertyCount; i++) {
+    for (unsigned int i = 0; i < propertyCount; i++) {
         objc_property_t property = propertyList[i];
         const char *name = property_getName(property);
         unsigned int attributeCount;

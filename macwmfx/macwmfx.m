@@ -22,9 +22,10 @@
     if (data) {
         NSError *error = nil;
         NSDictionary *config = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-        if (!error) {
+        if (!error && config != nil) {
             // Load features based on config
             // Example: if ([config[@"DisableTrafficLights"] boolValue]) { [self loadDisableTrafficLights]; }
+            NSLog(@"Config loaded successfully: %@", config);
         } else {
             NSLog(@"Error reading config: %@", error);
         }

@@ -1,6 +1,7 @@
 # Compiler and flags
 CC = clang
-CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle -arch arm64e
+CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle
+ARCHS = -arch x86_64 -arch arm64 -arch arm64e
 FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore
 
 # Project name and paths
@@ -36,11 +37,11 @@ $(BUILD_DIR):
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
 
 # Link dylib
 $(BUILD_DIR)/$(DYLIB_NAME): $(OBJECTS)
-	$(CC) $(DYLIB_FLAGS) $(OBJECTS) -o $@ $(FRAMEWORKS)
+	$(CC) $(DYLIB_FLAGS) $(ARCHS) $(OBJECTS) -o $@ $(FRAMEWORKS)
 
 # Install the dylib and blacklist
 install: $(BUILD_DIR)/$(DYLIB_NAME)
