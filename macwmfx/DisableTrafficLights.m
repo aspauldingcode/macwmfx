@@ -8,7 +8,6 @@
 
 #pragma mark - Library/Header Imports
 
-#import <Cocoa/Cocoa.h>
 #import <AppKit/AppKit.h>
 
 #import <objc/runtime.h>
@@ -65,7 +64,7 @@ DisableTrafficLights* plugin;
 
 #pragma mark - *** Handling
 
-ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
+ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
 
 @implementation BS_NSWindow
 
@@ -108,32 +107,5 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSWindow)
         [button removeFromSuperview];
     }
 }
-
-// "Brings the window to the front."
-// - (void)orderFront:(id)sender {
-//     // Call original method
-//     ZKOrig(void, sender);
-    
-//     // Hide traffic lights
-//     [self hideTrafficLights];
-// }
-
-// // "Called when the window becomes the key window."
-// - (void)windowDidBecomeKey:(NSNotification *)notification {
-//     // Call original method
-//     ZKOrig(void, notification);
-    
-//     // Hide traffic lights
-//     [self hideTrafficLights];
-// }
-
-// // "Called when the window resigns its key status."
-// - (void)windowDidResignKey:(NSNotification *)notification {
-//     // Call original method
-//     ZKOrig(void, notification);
-    
-//     // Hide traffic lights
-//     [self hideTrafficLights];
-// }
 
 @end
