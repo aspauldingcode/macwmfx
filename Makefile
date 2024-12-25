@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = clang
-CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle
+CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle -arch arm64e
 FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore
 
 # Project name and paths
