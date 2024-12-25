@@ -1,26 +1,32 @@
-#import <Cocoa/Cocoa.h>
+#import <AppKit/AppKit.h>
+#import "ZKSwizzle.h"
 
 @interface DisableResizeConstraints : NSObject
-
-+ (void)load;
-
 @end
 
 @implementation DisableResizeConstraints
 
 + (void)load {
-    NSArray *windows = [NSApp windows];
+    // Nothing needed here since we just want the swizzle
+}
+
+@end
+
+ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
+
+@implementation BS_NSWindow_Resize
+
+- (void)makeKeyAndOrderFront:(id)sender {
+    ZKOrig(void, sender);
     
-    for (NSWindow *window in windows) {
-        // Remove minimum size constraints
-        [window setMinSize:NSMakeSize(0, 0)];
-        
-        // Remove maximum size constraints
-        [window setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
-        
-        // Allow the window to be resized freely
-        [window setStyleMask:[window styleMask] | NSWindowStyleMaskResizable];
+    // Directly use self as NSWindow instead of accessing a private ivar
+    NSWindow *window = (NSWindow *)self;
+    
+    // Ensure the window is resizable
+    if (window.styleMask & NSWindowStyleMaskResizable) {
+        [window setMinSize:NSMakeSize(100.0, 100.0)]; // Set a reasonable minimum size
+        [window setMaxSize:NSMakeSize(10000.0, 10000.0)]; // Set a reasonable maximum size
     }
 }
 
-@end 
+@end
