@@ -29,7 +29,7 @@ ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
     
     // Set default opacity for all windows
     NSWindow *window = (NSWindow *)self;
-    [window setAlphaValue:0.7];
+    [window setAlphaValue:0.9];
 }
 
 - (void)setAlphaValue:(CGFloat)alpha {
