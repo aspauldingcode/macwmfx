@@ -108,6 +108,15 @@ clean:
 
 # Delete installed files
 delete:
+	@echo "Force quitting test applications..."
+	@pkill -9 "Spotify" 2>/dev/null || true
+	@pkill -9 "System Settings" 2>/dev/null || true
+	@pkill -9 "Chess" 2>/dev/null || true
+	@pkill -9 "soffice" 2>/dev/null || true
+	@pkill -9 "Brave Browser" 2>/dev/null || true
+	@pkill -9 "Beeper" 2>/dev/null || true
+	@pkill -9 "Safari" 2>/dev/null || true
+	@pkill -9 "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
 	@sudo rm -f $(INSTALL_PATH)
 	@sudo rm -f $(BLACKLIST_DEST)
 	@echo "Deleted $(DYLIB_NAME) and blacklist from $(INSTALL_DIR)"
