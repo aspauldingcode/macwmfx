@@ -22,11 +22,10 @@ ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
     // Directly use self as NSWindow instead of accessing a private ivar
     NSWindow *window = (NSWindow *)self;
     
-    // Ensure the window is resizable
-    if (window.styleMask & NSWindowStyleMaskResizable) {
-        [window setMinSize:NSMakeSize(100.0, 100.0)]; // Set a reasonable minimum size
-        [window setMaxSize:NSMakeSize(10000.0, 10000.0)]; // Set a reasonable maximum size
-    }
+    // Enable resizing and remove constraints
+    window.styleMask |= NSWindowStyleMaskResizable;
+    [window setMinSize:NSMakeSize(0.0, 0.0)];
+    [window setMaxSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
 }
 
 @end
