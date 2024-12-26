@@ -57,6 +57,24 @@ install: $(BUILD_DIR)/$(DYLIB_NAME)
 		echo "Installed $(DYLIB_NAME) to $(INSTALL_PATH)"; \
 	fi
 
+# Just install existing binaries without building
+install-only:
+	@if [ ! -f $(BUILD_DIR)/$(DYLIB_NAME) ]; then \
+		echo "Error: $(DYLIB_NAME) not found in build directory. Please build first."; \
+		exit 1; \
+	fi
+	@sudo mkdir -p $(INSTALL_DIR)
+	@sudo cp $(BUILD_DIR)/$(DYLIB_NAME) $(INSTALL_PATH)
+	@sudo chmod 755 $(INSTALL_PATH)
+	@if [ -f $(BLACKLIST_SOURCE) ]; then \
+		sudo cp $(BLACKLIST_SOURCE) $(BLACKLIST_DEST); \
+		sudo chmod 644 $(BLACKLIST_DEST); \
+		echo "Installed $(DYLIB_NAME) and blacklist to $(INSTALL_DIR)"; \
+	else \
+		echo "Warning: $(BLACKLIST_SOURCE) not found"; \
+		echo "Installed $(DYLIB_NAME) to $(INSTALL_PATH)"; \
+	fi
+
 # Test target that builds, installs, and relaunches test applications
 test: install
 	@echo "Clearing previous logs..."
@@ -127,4 +145,4 @@ uninstall:
 	@sudo rm -f $(BLACKLIST_DEST)
 	@echo "Uninstalled $(DYLIB_NAME) and blacklist"
 
-.PHONY: all clean install uninstall test delete
+.PHONY: all clean install install-only uninstall test delete

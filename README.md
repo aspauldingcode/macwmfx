@@ -3,9 +3,14 @@
 ![Preview](Preview.png)
 
 # Information:
-- macwmfx is a MacForge (SIMBL) plugin that enables configurable WindowManager Effects to macOS, similar to what swayfx does for sway on linux.
+- macwmfx is a macOS tweak for ammonia injector that enables configurable WindowManager Effects to macOS, similar to what swayfx does for sway on linux.
 - Authored by [aspauldingcode](https://github.com/aspauldingcode)
-- Inspired by [INTrafficLightsDisabler](https://github.com/indragiek/INTrafficLightsDisabler) and [StopStoplightLight](https://github.com/shishkabibal/StopStoplightLight)
+- Inspired by:
+  - [INTrafficLightsDisabler](https://github.com/indragiek/INTrafficLightsDisabler)
+  - [StopStoplightLight](https://github.com/shishkabibal/StopStoplightLight)
+  - [AfloatX](https://github.com/jslegendre/AfloatX)
+  - [Goodbye](https://github.com/MacEnhance/Goodbye)
+
 
 # Features:
 - Configurable windowfx dotfile in ~/.config/macwmfx/config
@@ -20,12 +25,12 @@
 - Whitelist applications by bundle identifier
 - Blacklist applications by bundle identifier
 
-# Installation:
-1. Download [MacForge Apple silicon beta](https://github.com/jslegendre/appcast/raw/master/Beta/MacForge/MacForge.1.2.2-3.zip)
-2. Download [macwmfx](https://github.com/aspauldingcode/macwmfx/releases/latest)
-3. Unzip both downloads
-4. Open `macwmfx.bundle` with `MacForge.app`
-5. Restart computer
+# Installation (WIP):
+1. Download and install [ammonia](https://github.com/CoreBedtime/ammonia/releases/latest) from bedtime. Also, make sure to disable SIP, library validation, and authenticated-root.
+2. git clone [macwmfx](https://github.com/aspauldingcode/macwmfx/)
+<!-- 2. Download [macwmfx](https://github.com/aspauldingcode/macwmfx/releases/latest) -->
+3. Compile macwmfx with `make`
+4. Install macwmfx with `make install`
 
-### Appeal:
-Repurpose the code any way you like, but please don't just repackage it with your name. Remember to be nice to other people. If you make any changes and want to contribute, feel free to make a pull request.
+### Contributing:
+Feel free to modify and adapt this code for your own projects. However, please provide appropriate attribution rather than simply rebranding it. Be respectful of the open source community. If you make improvements, we welcome pull requests and contributions back to the project.
