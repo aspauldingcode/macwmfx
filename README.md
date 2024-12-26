@@ -22,6 +22,7 @@
 - Enable Window Transparency
 - Border Outline (active/inactive), Border Width
 - **Border Corner Radius** - This one is special.
+- All applications will quit when the last window closes
 - Whitelist applications by bundle identifier
 - Blacklist applications by bundle identifier
 
