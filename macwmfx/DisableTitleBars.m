@@ -30,7 +30,7 @@ ZKSwizzleInterface(BS_NSWindow_TitleBar, NSWindow, NSWindow)
     ZKOrig(void, sender);
     
     // Disable the title bar
-    [self disableTitleBar];
+    // [self disableTitleBar]; // TODO: Add this back in after bugfixes.
 }
 
 - (void)disableTitleBar {

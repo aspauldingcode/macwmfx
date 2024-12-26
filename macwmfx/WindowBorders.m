@@ -54,6 +54,14 @@
         return NO;
     }
     
+    // Skip if it's Finder but not a Finder window
+    NSString *bundleID = [NSBundle mainBundle].bundleIdentifier;
+    if ([bundleID isEqualToString:@"com.apple.finder"]) {
+        if (![className containsString:@"BrowserWindow"]) {
+            return NO;
+        }
+    }
+    
     return YES;
 }
 
