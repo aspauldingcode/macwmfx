@@ -14,6 +14,7 @@ static const CGFloat kBorderWidth = 2.0;
 - (void)wmfx_orderFront:(id)sender;
 - (void)wmfx_orderBack:(id)sender;
 - (void)wmfx_orderOut:(id)sender;
+- (void)wmfx_windowDidMove:(NSNotification *)notification;
 - (void)updateBorderWindow:(BOOL)isActive;
 - (void)updateBorderWindowFrame;
 @end
@@ -77,7 +78,7 @@ static const CGFloat kBorderWidth = 2.0;
     [self wmfx_orderWindow:orderingMode relativeTo:otherWindowNumber];
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (borderWindow) {
-        [borderWindow orderWindow:orderingMode relativeTo:otherWindowNumber];
+        [borderWindow orderWindow:orderingMode relativeTo:self.windowNumber];
     }
 }
 
@@ -93,7 +94,7 @@ static const CGFloat kBorderWidth = 2.0;
     [self wmfx_orderFront:sender];
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (borderWindow) {
-        [borderWindow orderFront:sender];
+        [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
     }
 }
 
@@ -117,7 +118,7 @@ static const CGFloat kBorderWidth = 2.0;
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     
     if (!borderWindow) {
-        NSRect frame = NSInsetRect(self.frame, -kBorderWidth, -kBorderWidth);
+        NSRect frame = self.frame;
         borderWindow = [[NSWindow alloc] initWithContentRect:frame
                                                  styleMask:NSWindowStyleMaskBorderless
                                                    backing:NSBackingStoreBuffered
@@ -128,13 +129,23 @@ static const CGFloat kBorderWidth = 2.0;
         [borderWindow setHasShadow:NO];
         [borderWindow setLevel:self.level];
         [borderWindow setIgnoresMouseEvents:YES];
-        [borderWindow setCollectionBehavior:self.collectionBehavior];
         [borderWindow setParentWindow:self];
+        [borderWindow setCollectionBehavior:self.collectionBehavior];
+        [borderWindow setReleasedWhenClosed:NO];
+        [borderWindow setAnimationBehavior:NSWindowAnimationBehaviorNone];
         
-        NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
+        NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(-kBorderWidth, -kBorderWidth, 
+                                                                     frame.size.width + 2*kBorderWidth, 
+                                                                     frame.size.height + 2*kBorderWidth)];
         borderView.wantsLayer = YES;
         borderView.layer.borderWidth = kBorderWidth;
         borderWindow.contentView = borderView;
+        
+        // Add window movement notification observer
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(wmfx_windowDidMove:)
+                                                 name:NSWindowDidMoveNotification
+                                               object:self];
         
         objc_setAssociatedObject(self, BorderWindowKey, borderWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -142,20 +153,27 @@ static const CGFloat kBorderWidth = 2.0;
     NSView *borderView = borderWindow.contentView;
     borderView.layer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
     
-    [self updateBorderWindowFrame];
     if (self.isVisible) {
+        [borderWindow setFrame:self.frame display:NO];
         [borderWindow setIsVisible:YES];
         [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
     }
+}
+
+- (void)wmfx_windowDidMove:(NSNotification *)notification {
+    [self updateBorderWindowFrame];
 }
 
 - (void)updateBorderWindowFrame {
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (!borderWindow) return;
     
-    NSRect frame = self.frame;
-    NSRect borderFrame = NSInsetRect(frame, -kBorderWidth, -kBorderWidth);
-    [borderWindow setFrame:borderFrame display:YES];
+    [borderWindow setFrame:self.frame display:NO];
+    [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
