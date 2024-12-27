@@ -118,8 +118,11 @@ static const CGFloat kBorderWidth = 2.0;
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     
     if (!borderWindow) {
-        NSRect frame = self.frame;
-        borderWindow = [[NSWindow alloc] initWithContentRect:frame
+        // Create border window larger than the parent window
+        NSRect parentFrame = self.frame;
+        NSRect borderFrame = NSInsetRect(parentFrame, -kBorderWidth, -kBorderWidth);
+        
+        borderWindow = [[NSWindow alloc] initWithContentRect:borderFrame
                                                  styleMask:NSWindowStyleMaskBorderless
                                                    backing:NSBackingStoreBuffered
                                                      defer:NO];
@@ -134,9 +137,8 @@ static const CGFloat kBorderWidth = 2.0;
         [borderWindow setReleasedWhenClosed:NO];
         [borderWindow setAnimationBehavior:NSWindowAnimationBehaviorNone];
         
-        NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(-kBorderWidth, -kBorderWidth, 
-                                                                     frame.size.width + 2*kBorderWidth, 
-                                                                     frame.size.height + 2*kBorderWidth)];
+        // Create a view that fills the entire border window
+        NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, borderFrame.size.width, borderFrame.size.height)];
         borderView.wantsLayer = YES;
         borderView.layer.borderWidth = kBorderWidth;
         borderWindow.contentView = borderView;
@@ -154,7 +156,7 @@ static const CGFloat kBorderWidth = 2.0;
     borderView.layer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
     
     if (self.isVisible) {
-        [borderWindow setFrame:self.frame display:NO];
+        [self updateBorderWindowFrame];
         [borderWindow setIsVisible:YES];
         [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
     }
@@ -168,7 +170,11 @@ static const CGFloat kBorderWidth = 2.0;
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (!borderWindow) return;
     
-    [borderWindow setFrame:self.frame display:NO];
+    // Make border window larger than parent window
+    NSRect parentFrame = self.frame;
+    NSRect borderFrame = NSInsetRect(parentFrame, -kBorderWidth, -kBorderWidth);
+    
+    [borderWindow setFrame:borderFrame display:NO];
     [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
 }
 
