@@ -4,6 +4,20 @@
 static void *BorderWindowKey = &BorderWindowKey;
 static const CGFloat kBorderWidth = 2.0;
 
+@interface NSWindow (WindowBordersOutline)
+- (void)wmfx_becomeKeyWindow;
+- (void)wmfx_resignKeyWindow;
+- (void)wmfx_setFrame:(NSRect)frame display:(BOOL)display;
+- (void)wmfx_setFrame:(NSRect)frame display:(BOOL)display animate:(BOOL)animate;
+- (void)wmfx_orderWindow:(NSWindowOrderingMode)orderingMode relativeTo:(NSInteger)otherWindowNumber;
+- (void)wmfx_setLevel:(NSInteger)windowLevel;
+- (void)wmfx_orderFront:(id)sender;
+- (void)wmfx_orderBack:(id)sender;
+- (void)wmfx_orderOut:(id)sender;
+- (void)updateBorderWindow:(BOOL)isActive;
+- (void)updateBorderWindowFrame;
+@end
+
 @implementation NSWindow (WindowBordersOutline)
 
 + (void)load {
