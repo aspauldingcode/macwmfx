@@ -4,7 +4,7 @@
 static void *BorderWindowKey = &BorderWindowKey;
 static const CGFloat kBorderWidth = 2.0;
 
-@implementation NSWindow (WindowBorders)
+@implementation NSWindow (WindowBordersOutline)
 
 + (void)load {
     static dispatch_once_t onceToken;
@@ -15,6 +15,9 @@ static const CGFloat kBorderWidth = 2.0;
         [self swizzleMethod:@selector(setFrame:display:animate:) withMethod:@selector(wmfx_setFrame:display:animate:)];
         [self swizzleMethod:@selector(orderWindow:relativeTo:) withMethod:@selector(wmfx_orderWindow:relativeTo:)];
         [self swizzleMethod:@selector(setLevel:) withMethod:@selector(wmfx_setLevel:)];
+        [self swizzleMethod:@selector(orderFront:) withMethod:@selector(wmfx_orderFront:)];
+        [self swizzleMethod:@selector(orderBack:) withMethod:@selector(wmfx_orderBack:)];
+        [self swizzleMethod:@selector(orderOut:) withMethod:@selector(wmfx_orderOut:)];
     });
 }
 
@@ -58,26 +61,49 @@ static const CGFloat kBorderWidth = 2.0;
 
 - (void)wmfx_orderWindow:(NSWindowOrderingMode)orderingMode relativeTo:(NSInteger)otherWindowNumber {
     [self wmfx_orderWindow:orderingMode relativeTo:otherWindowNumber];
-    
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (borderWindow) {
-        [borderWindow orderWindow:orderingMode relativeTo:self.windowNumber];
+        [borderWindow orderWindow:orderingMode relativeTo:otherWindowNumber];
     }
 }
 
 - (void)wmfx_setLevel:(NSInteger)windowLevel {
     [self wmfx_setLevel:windowLevel];
-    
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
     if (borderWindow) {
         [borderWindow setLevel:windowLevel];
     }
 }
 
+- (void)wmfx_orderFront:(id)sender {
+    [self wmfx_orderFront:sender];
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (borderWindow) {
+        [borderWindow orderFront:sender];
+    }
+}
+
+- (void)wmfx_orderBack:(id)sender {
+    [self wmfx_orderBack:sender];
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (borderWindow) {
+        [borderWindow orderWindow:NSWindowBelow relativeTo:self.windowNumber];
+    }
+}
+
+- (void)wmfx_orderOut:(id)sender {
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (borderWindow) {
+        [borderWindow orderOut:sender];
+    }
+    [self wmfx_orderOut:sender];
+}
+
 - (void)updateBorderWindow:(BOOL)isActive {
     NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    
     if (!borderWindow) {
-        NSRect frame = self.frame;
+        NSRect frame = NSInsetRect(self.frame, -kBorderWidth, -kBorderWidth);
         borderWindow = [[NSWindow alloc] initWithContentRect:frame
                                                  styleMask:NSWindowStyleMaskBorderless
                                                    backing:NSBackingStoreBuffered
@@ -89,8 +115,8 @@ static const CGFloat kBorderWidth = 2.0;
         [borderWindow setLevel:self.level];
         [borderWindow setIgnoresMouseEvents:YES];
         [borderWindow setCollectionBehavior:self.collectionBehavior];
+        [borderWindow setParentWindow:self];
         
-        // Create a view for the border
         NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
         borderView.wantsLayer = YES;
         borderView.layer.borderWidth = kBorderWidth;
@@ -103,7 +129,10 @@ static const CGFloat kBorderWidth = 2.0;
     borderView.layer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
     
     [self updateBorderWindowFrame];
-    [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
+    if (self.isVisible) {
+        [borderWindow setIsVisible:YES];
+        [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
+    }
 }
 
 - (void)updateBorderWindowFrame {
@@ -112,12 +141,7 @@ static const CGFloat kBorderWidth = 2.0;
     
     NSRect frame = self.frame;
     NSRect borderFrame = NSInsetRect(frame, -kBorderWidth, -kBorderWidth);
-    
     [borderWindow setFrame:borderFrame display:YES];
-    
-    // Update the content view's frame
-    NSView *borderView = borderWindow.contentView;
-    borderView.frame = NSMakeRect(0, 0, borderFrame.size.width, borderFrame.size.height);
 }
 
 @end

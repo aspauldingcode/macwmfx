@@ -4,11 +4,11 @@
 // static void *BorderLayerKey = &BorderLayerKey;
 // static const CGFloat kBorderWidth = 2.0;
 
-// @interface NSWindow (WindowBorders)
+// @interface NSWindow (WindowBordersInline)
 // - (void)updateBorderLayer:(BOOL)isActive;
 // @end
 
-// @implementation NSWindow (WindowBorders)
+// @implementation NSWindow (WindowBordersInline)
 
 // + (void)load {
 //     static dispatch_once_t onceToken;
