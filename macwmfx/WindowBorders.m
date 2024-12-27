@@ -85,7 +85,7 @@ static const CGFloat kBorderWidth = 2.0;
         objc_setAssociatedObject(self, BorderLayerKey, borderLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     
-    borderLayer.borderColor = isActive ? NSColor.systemBlueColor.CGColor : NSColor.grayColor.CGColor;
+    borderLayer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
     [frameView setNeedsDisplay:YES];
 }
 
