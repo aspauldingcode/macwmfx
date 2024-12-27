@@ -2,7 +2,7 @@
 #import "WindowBorders.h"
 
 static void *BorderWindowKey = &BorderWindowKey;
-static const CGFloat kBorderWidth = 5.0;
+static const CGFloat kBorderWidth = 2.0;
 
 @implementation NSWindow (WindowBorders)
 
