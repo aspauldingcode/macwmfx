@@ -12,7 +12,7 @@ INSTALL_DIR = /usr/local/bin/ammonia/tweaks
 SOURCE_DIR = macwmfx
 
 # Source files
-SOURCES = $(wildcard $(SOURCE_DIR)/*.m) $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m)
+SOURCES = $(wildcard $(SOURCE_DIR)/*.m) $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) $(wildcard $(SOURCE_DIR)/NSWindowMaskingShapes/*.m)
 OBJECTS = $(SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 
 # Installation targets
@@ -33,6 +33,7 @@ all: $(BUILD_DIR)/$(DYLIB_NAME)
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)/ZKSwizzle
+	@mkdir -p $(BUILD_DIR)/NSWindowMaskingShapes
 
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)

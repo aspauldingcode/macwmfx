@@ -8,10 +8,10 @@
 - (CALayer *)contentView;
 @end
 
-@interface CornerRadiusController : NSObject
+@interface WindowStarController : NSObject
 @end
 
-@implementation CornerRadiusController
+@implementation WindowStarController
 
 + (void)load {
     Method maskMethod = class_getInstanceMethod(NSClassFromString(@"NSWindow"), @selector(_cornerMask));
