@@ -1,92 +1,123 @@
-// #import <AppKit/AppKit.h>
-// #import <objc/runtime.h>
+#import <AppKit/AppKit.h>
+#import <objc/runtime.h>
 
-// static void *BorderLayerKey = &BorderLayerKey;
-// static const CGFloat kBorderWidth = 2.0;
+static void *BorderWindowKey = &BorderWindowKey;
+static const CGFloat kBorderWidth = 2.0;
 
-// @interface NSWindow (WindowBorders)
-// - (void)updateBorderLayer:(BOOL)isActive;
-// @end
+@implementation NSWindow (WindowBorders)
 
-// @implementation NSWindow (WindowBorders)
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [self swizzleMethod:@selector(becomeKeyWindow) withMethod:@selector(wmfx_becomeKeyWindow)];
+        [self swizzleMethod:@selector(resignKeyWindow) withMethod:@selector(wmfx_resignKeyWindow)];
+        [self swizzleMethod:@selector(setFrame:display:) withMethod:@selector(wmfx_setFrame:display:)];
+        [self swizzleMethod:@selector(setFrame:display:animate:) withMethod:@selector(wmfx_setFrame:display:animate:)];
+        [self swizzleMethod:@selector(orderWindow:relativeTo:) withMethod:@selector(wmfx_orderWindow:relativeTo:)];
+        [self swizzleMethod:@selector(setLevel:) withMethod:@selector(wmfx_setLevel:)];
+    });
+}
 
-// + (void)load {
-//     static dispatch_once_t onceToken;
-//     dispatch_once(&onceToken, ^{
-//         [self swizzleMethod:@selector(becomeKeyWindow) withMethod:@selector(wmfx_becomeKeyWindow)];
-//         [self swizzleMethod:@selector(resignKeyWindow) withMethod:@selector(wmfx_resignKeyWindow)];
-//         [self swizzleMethod:@selector(makeKeyWindow) withMethod:@selector(wmfx_makeKeyWindow)];
-//         [self swizzleMethod:@selector(initWithContentRect:styleMask:backing:defer:) 
-//                 withMethod:@selector(wmfx_initWithContentRect:styleMask:backing:defer:)];
-//     });
-// }
-
-// + (void)swizzleMethod:(SEL)original withMethod:(SEL)swizzled {
-//     Class class = self;
-//     Method originalMethod = class_getInstanceMethod(class, original);
-//     Method swizzledMethod = class_getInstanceMethod(class, swizzled);
++ (void)swizzleMethod:(SEL)original withMethod:(SEL)swizzled {
+    Class class = self;
+    Method originalMethod = class_getInstanceMethod(class, original);
+    Method swizzledMethod = class_getInstanceMethod(class, swizzled);
     
-//     BOOL didAdd = class_addMethod(class, original,
-//                                 method_getImplementation(swizzledMethod),
-//                                 method_getTypeEncoding(swizzledMethod));
+    BOOL didAdd = class_addMethod(class, original,
+                                method_getImplementation(swizzledMethod),
+                                method_getTypeEncoding(swizzledMethod));
     
-//     if (didAdd) {
-//         class_replaceMethod(class, swizzled,
-//                           method_getImplementation(originalMethod),
-//                           method_getTypeEncoding(originalMethod));
-//     } else {
-//         method_exchangeImplementations(originalMethod, swizzledMethod);
-//     }
-// }
+    if (didAdd) {
+        class_replaceMethod(class, swizzled,
+                          method_getImplementation(originalMethod),
+                          method_getTypeEncoding(originalMethod));
+    } else {
+        method_exchangeImplementations(originalMethod, swizzledMethod);
+    }
+}
 
-// - (instancetype)wmfx_initWithContentRect:(NSRect)contentRect
-//                              styleMask:(NSWindowStyleMask)style
-//                                backing:(NSBackingStoreType)backingStoreType
-//                                  defer:(BOOL)flag {
-//     NSWindow *window = [self wmfx_initWithContentRect:contentRect
-//                                           styleMask:style
-//                                             backing:backingStoreType
-//                                               defer:flag];
-//     [window updateBorderLayer:NO];
-//     return window;
-// }
+- (void)wmfx_becomeKeyWindow {
+    [self wmfx_becomeKeyWindow];
+    [self updateBorderWindow:YES];
+}
 
-// - (void)wmfx_makeKeyWindow {
-//     [self wmfx_makeKeyWindow];
-//     [self updateBorderLayer:YES];
-// }
+- (void)wmfx_resignKeyWindow {
+    [self wmfx_resignKeyWindow];
+    [self updateBorderWindow:NO];
+}
 
-// - (void)wmfx_becomeKeyWindow {
-//     [self wmfx_becomeKeyWindow];
-//     [self updateBorderLayer:YES];
-// }
+- (void)wmfx_setFrame:(NSRect)frame display:(BOOL)display {
+    [self wmfx_setFrame:frame display:display];
+    [self updateBorderWindowFrame];
+}
 
-// - (void)wmfx_resignKeyWindow {
-//     [self wmfx_resignKeyWindow];
-//     [self updateBorderLayer:NO];
-// }
+- (void)wmfx_setFrame:(NSRect)frame display:(BOOL)display animate:(BOOL)animate {
+    [self wmfx_setFrame:frame display:display animate:animate];
+    [self updateBorderWindowFrame];
+}
 
-// - (void)updateBorderLayer:(BOOL)isActive {
-//     NSView *frameView = [self.contentView superview];
-//     if (!frameView) return;
+- (void)wmfx_orderWindow:(NSWindowOrderingMode)orderingMode relativeTo:(NSInteger)otherWindowNumber {
+    [self wmfx_orderWindow:orderingMode relativeTo:otherWindowNumber];
     
-//     frameView.wantsLayer = YES;
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (borderWindow) {
+        [borderWindow orderWindow:orderingMode relativeTo:self.windowNumber];
+    }
+}
+
+- (void)wmfx_setLevel:(NSInteger)windowLevel {
+    [self wmfx_setLevel:windowLevel];
     
-//     CALayer *borderLayer = objc_getAssociatedObject(self, BorderLayerKey);
-//     if (!borderLayer) {
-//         borderLayer = [CALayer layer];
-//         borderLayer.frame = frameView.bounds;
-//         borderLayer.borderWidth = kBorderWidth;
-//         borderLayer.cornerRadius = 0;
-//         borderLayer.masksToBounds = NO;
-//         borderLayer.backgroundColor = NSColor.clearColor.CGColor;
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (borderWindow) {
+        [borderWindow setLevel:windowLevel];
+    }
+}
+
+- (void)updateBorderWindow:(BOOL)isActive {
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (!borderWindow) {
+        NSRect frame = self.frame;
+        borderWindow = [[NSWindow alloc] initWithContentRect:frame
+                                                 styleMask:NSWindowStyleMaskBorderless
+                                                   backing:NSBackingStoreBuffered
+                                                     defer:NO];
         
-//         frameView.layer = borderLayer;
-//         objc_setAssociatedObject(self, BorderLayerKey, borderLayer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-//     }
+        [borderWindow setBackgroundColor:[NSColor clearColor]];
+        [borderWindow setOpaque:NO];
+        [borderWindow setHasShadow:NO];
+        [borderWindow setLevel:self.level];
+        [borderWindow setIgnoresMouseEvents:YES];
+        [borderWindow setCollectionBehavior:self.collectionBehavior];
+        
+        // Create a view for the border
+        NSView *borderView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
+        borderView.wantsLayer = YES;
+        borderView.layer.borderWidth = kBorderWidth;
+        borderWindow.contentView = borderView;
+        
+        objc_setAssociatedObject(self, BorderWindowKey, borderWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
     
-//     borderLayer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
-//     [frameView setNeedsDisplay:YES];
-// }
+    NSView *borderView = borderWindow.contentView;
+    borderView.layer.borderColor = isActive ? NSColor.controlAccentColor.CGColor : NSColor.selectedControlColor.CGColor;
+    
+    [self updateBorderWindowFrame];
+    [borderWindow orderWindow:NSWindowAbove relativeTo:self.windowNumber];
+}
 
-// @end
+- (void)updateBorderWindowFrame {
+    NSWindow *borderWindow = objc_getAssociatedObject(self, BorderWindowKey);
+    if (!borderWindow) return;
+    
+    NSRect frame = self.frame;
+    NSRect borderFrame = NSInsetRect(frame, -kBorderWidth, -kBorderWidth);
+    
+    [borderWindow setFrame:borderFrame display:YES];
+    
+    // Update the content view's frame
+    NSView *borderView = borderWindow.contentView;
+    borderView.frame = NSMakeRect(0, 0, borderFrame.size.width, borderFrame.size.height);
+}
+
+@end
