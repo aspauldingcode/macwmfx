@@ -14,6 +14,8 @@
 
 #import "ZKSwizzle.h"
 
+#import "macwmfx_globals.h"
+
 #include <os/log.h>
 #define DLog(N, ...) os_log_with_type(os_log_create("com.aspauldingcode.macwmfx", "DEBUG"),OS_LOG_TYPE_DEFAULT,N ,##__VA_ARGS__)
 
@@ -52,11 +54,6 @@ DisableTrafficLights* plugin;
 + (void)load {
     // Create plugin singleton + bundle & statusItem
     plugin = [DisableTrafficLights sharedInstance];
-        
-//    // Log loading
-//    NSUInteger major = [[NSProcessInfo processInfo] operatingSystemVersion].majorVersion;
-//    NSUInteger minor = [[NSProcessInfo processInfo] operatingSystemVersion].minorVersion;
-//    DLog("%{public}@: Loaded (%{public}@ - macOS %ld.%ld)", [self className], [[NSBundle mainBundle] bundleIdentifier], (long)major, (long)minor);
 }
 
 @end
@@ -79,8 +76,10 @@ ZKSwizzleInterface(BS_NSWindow, NSWindow, NSResponder)
     // Call original method
     ZKOrig(void, sender);
     
-    // Hide traffic lights
-    [self hideTrafficLights];
+    // Hide traffic lights if the setting is enabled
+    if (gDisableTrafficLights) {
+        [self hideTrafficLights];
+    }
 }
 
 // Hide traffic lights

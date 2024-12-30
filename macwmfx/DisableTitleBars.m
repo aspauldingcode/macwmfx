@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "ZKSwizzle.h"
+#import "macwmfx_globals.h"
 
 @interface DisableTitleBars : NSObject
 @end
@@ -29,8 +30,10 @@ ZKSwizzleInterface(BS_NSWindow_TitleBar, NSWindow, NSWindow)
 - (void)makeKeyAndOrderFront:(id)sender {
     ZKOrig(void, sender);
     
-    // Disable the title bar
-    // [self disableTitleBar]; // TODO: Add this back in after bugfixes.
+    // Disable title bar if the setting is enabled
+    if (gDisableTitlebar) {
+        [self disableTitleBar];
+    }
 }
 
 - (void)disableTitleBar {
