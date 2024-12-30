@@ -1,17 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "ZKSwizzle.h"
 
-@interface DisableWindowShadow : NSObject
-@end
-
-@implementation DisableWindowShadow
-
-+ (void)load {
-    // Nothing needed here since we just want the swizzle
-}
-
-@end
-
 ZKSwizzleInterface(BS_NSWindow_Shadow, NSWindow, NSWindow)
 
 @implementation BS_NSWindow_Shadow

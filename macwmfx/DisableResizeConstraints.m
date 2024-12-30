@@ -2,28 +2,6 @@
 #import "ZKSwizzle.h"
 #import "macwmfx_globals.h"
 
-@interface DisableResizeConstraints : NSObject
-+ (instancetype)sharedInstance;
-@end
-
-@implementation DisableResizeConstraints
-
-+ (void)load {
-    // Initialize the swizzle when the class is loaded
-    [self sharedInstance];
-}
-
-+ (instancetype)sharedInstance {
-    static DisableResizeConstraints *sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[self alloc] init];
-    });
-    return sharedInstance;
-}
-
-@end
-
 ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
 
 @implementation BS_NSWindow_Resize
