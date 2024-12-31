@@ -1,5 +1,3 @@
-// #import <Cocoa/Cocoa.h>
-// #import "ZKSwizzle.h"
 // #import "macwmfx_globals.h"
 
 // ZKSwizzleInterface(BS_NSWindow_TitleBar, NSWindow, NSWindow)

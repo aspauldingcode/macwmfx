@@ -1,21 +1,18 @@
-#import <Cocoa/Cocoa.h>
-#import "ZKSwizzle.h"
+// #import "macwmfx_globals.h"
 
-ZKSwizzleInterface(BS_NSWindow_Shadow, NSWindow, NSWindow)
+// ZKSwizzleInterface(BS_NSWindow_Shadow, NSWindow, NSWindow)
 
-@implementation BS_NSWindow_Shadow
+// @implementation BS_NSWindow_Shadow
 
-- (void)makeKeyAndOrderFront:(id)sender {
-    ZKOrig(void, sender);
-    
-    // Disable shadow for all windows
-    NSWindow *window = (NSWindow *)self;
-    [window setHasShadow:NO];
-}
+// - (void)makeKeyAndOrderFront:(id)sender {
+//     ZKOrig(void, sender);
+//     if (gDisableWindowShadow) {
+//         [(NSWindow *)self setHasShadow:NO];
+//     }
+// }
 
-- (void)setHasShadow:(BOOL)hasShadow {
-    // Always set shadow to NO
-    ZKOrig(void, NO);
-}
+// - (void)setHasShadow:(BOOL)hasShadow {
+//     ZKOrig(void, gDisableWindowShadow ? NO : hasShadow);
+// }
 
-@end 
+// @end

@@ -6,8 +6,6 @@
 // //  Copyright © 2019 j. All rights reserved.
 // //
 
-// #import <AppKit/AppKit.h>
-// #import "ZKSwizzle.h"
 // #import "macwmfx_globals.h"
 
 // @interface OpacityController : NSObject

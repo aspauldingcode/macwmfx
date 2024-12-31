@@ -1,5 +1,4 @@
-// #import <Cocoa/Cocoa.h>
-// #import "ZKSwizzle.h"
+// #import "macwmfx_globals.h"
 
 // // Apps that should never be terminated
 // static NSSet *excludedBundleIDs;

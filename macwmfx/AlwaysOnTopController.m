@@ -1,5 +1,4 @@
-// #import <AppKit/AppKit.h>
-// #import "ZKSwizzle.h"
+#import "macwmfx_globals.h"
 
 // @interface AlwaysOnTopController : NSObject
 // @end

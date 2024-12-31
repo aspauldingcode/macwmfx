@@ -28,6 +28,8 @@ NSColor *gOutlineInactiveColor = nil;
 
 NSString *gSystemColorSchemeVariant = @"dark";
 
+BOOL gDisableWindowShadow = NO;  // Default value is NO
+
 @interface MacWMFX : NSObject
 
 + (instancetype)sharedInstance;
@@ -89,84 +91,60 @@ NSString *gSystemColorSchemeVariant = @"dark";
 }
 
 - (void)loadFeaturesFromConfig {
-    NSString *configPath = [NSHomeDirectory() stringByAppendingPathComponent:@".config/macwmfx/config"];
-    NSLog(@"Attempting to load config from: %@", configPath);
+    NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
+    NSData *configData = [NSData dataWithContentsOfFile:configPath];
     
-    NSData *data = [NSData dataWithContentsOfFile:configPath];
-    if (data) {
-        NSError *error = nil;
-        NSDictionary *config = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-        if (!error && config != nil) {
-            // Load values from config
-            if (config[@"blurPasses"]) {
-                gBlurPasses = [config[@"blurPasses"] integerValue];
-                NSLog(@"Set gBlurPasses to: %ld", (long)gBlurPasses);
-            }
-            if (config[@"blurRadius"]) {
-                gBlurRadius = [config[@"blurRadius"] doubleValue];
-                NSLog(@"Set gBlurRadius to: %f", gBlurRadius);
-            }
-            if (config[@"transparency"]) {
-                gTransparency = [config[@"transparency"] doubleValue];
-                NSLog(@"Set gTransparency to: %f", gTransparency);
-            }
-            
-            // Window behavior
-            if (config[@"disableTitlebar"]) {
-                gDisableTitlebar = [config[@"disableTitlebar"] boolValue];
-                NSLog(@"Set gDisableTitlebar to: %d", gDisableTitlebar);
-            }
-            if (config[@"disableTrafficLights"]) {
-                gDisableTrafficLights = [config[@"disableTrafficLights"] boolValue];
-                NSLog(@"Set gDisableTrafficLights to: %d", gDisableTrafficLights);
-            }
-            if (config[@"disableWindowSizeConstraints"]) {
-                gDisableWindowSizeConstraints = [config[@"disableWindowSizeConstraints"] boolValue];
-                NSLog(@"Set gDisableWindowSizeConstraints to: %d", gDisableWindowSizeConstraints);
-            }
-            
-            // Window outline
-            NSDictionary *outlineConfig = config[@"outlineWindow"];
-            if (outlineConfig) {
-                if (outlineConfig[@"enabled"]) {
-                    gOutlineEnabled = [outlineConfig[@"enabled"] boolValue];
-                    NSLog(@"Set gOutlineEnabled to: %d", gOutlineEnabled);
-                }
-                if (outlineConfig[@"width"]) {
-                    gOutlineWidth = [outlineConfig[@"width"] doubleValue];
-                    NSLog(@"Set gOutlineWidth to: %f", gOutlineWidth);
-                }
-                if (outlineConfig[@"cornerRadius"]) {
-                    gOutlineCornerRadius = [outlineConfig[@"cornerRadius"] doubleValue];
-                    NSLog(@"Set gOutlineCornerRadius to: %f", gOutlineCornerRadius);
-                }
-                if (outlineConfig[@"type"]) {
-                    gOutlineType = [outlineConfig[@"type"] copy];
-                    NSLog(@"Set gOutlineType to: %@", gOutlineType);
-                }
-                if (outlineConfig[@"activeColor"]) {
-                    gOutlineActiveColor = [self colorFromHexString:outlineConfig[@"activeColor"]];
-                    NSLog(@"Set gOutlineActiveColor from hex: %@", outlineConfig[@"activeColor"]);
-                }
-                if (outlineConfig[@"inactiveColor"]) {
-                    gOutlineInactiveColor = [self colorFromHexString:outlineConfig[@"inactiveColor"]];
-                    NSLog(@"Set gOutlineInactiveColor from hex: %@", outlineConfig[@"inactiveColor"]);
-                }
-            }
-            
-            // System appearance
-            if (config[@"systemColorSchemeVariant"]) {
-                gSystemColorSchemeVariant = [config[@"systemColorSchemeVariant"] copy];
-                NSLog(@"Set gSystemColorSchemeVariant to: %@", gSystemColorSchemeVariant);
-            }
-            
-            NSLog(@"Config loaded successfully");
-        } else {
-            NSLog(@"Error reading config: %@", error);
-        }
-    } else {
-        NSLog(@"Config file not found at path: %@", configPath);
+    if (!configData) {
+        NSLog(@"No config found at %@", configPath);
+        return;
     }
+    
+    NSError *error = nil;
+    NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
+    
+    if (error || !config) {
+        NSLog(@"Error parsing config file: %@", error);
+        return;
+    }
+    
+    // Window Appearance
+    gBlurPasses = [config[@"blurPasses"] integerValue] ?: gBlurPasses;
+    gBlurRadius = [config[@"blurRadius"] doubleValue] ?: gBlurRadius;
+    gTransparency = [config[@"transparency"] doubleValue] ?: gTransparency;
+    gDisableWindowShadow = [config[@"disableWindowShadow"] boolValue];
+    
+    // Window Behavior
+    gDisableTitlebar = [config[@"disableTitlebar"] boolValue];
+    gDisableTrafficLights = [config[@"disableTrafficLights"] boolValue];
+    gDisableWindowSizeConstraints = [config[@"disableWindowSizeConstraints"] boolValue];
+    
+    // Window Outline
+    gOutlineEnabled = [config[@"outlineWindow"][@"enabled"] boolValue];
+    gOutlineWidth = [config[@"outlineWindow"][@"width"] doubleValue] ?: gOutlineWidth;
+    gOutlineCornerRadius = [config[@"outlineWindow"][@"cornerRadius"] doubleValue] ?: gOutlineCornerRadius;
+    
+    NSString *outlineType = config[@"outlineWindow"][@"type"];
+    if (outlineType) {
+        gOutlineType = [outlineType copy];
+    }
+    
+    NSString *activeColor = config[@"outlineWindow"][@"activeColor"];
+    if (activeColor) {
+        gOutlineActiveColor = [self colorFromHexString:activeColor];
+    }
+    
+    NSString *inactiveColor = config[@"outlineWindow"][@"inactiveColor"];
+    if (inactiveColor) {
+        gOutlineInactiveColor = [self colorFromHexString:inactiveColor];
+    }
+    
+    // System Appearance
+    NSString *colorScheme = config[@"systemColorSchemeVariant"];
+    if (colorScheme) {
+        gSystemColorSchemeVariant = [colorScheme copy];
+    }
+    
+    NSLog(@"Config loaded from JSON file");
 }
 
 @end

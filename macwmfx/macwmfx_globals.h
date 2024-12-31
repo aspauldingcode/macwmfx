@@ -3,6 +3,8 @@
 #define MACWMFX_GLOBALS_H
 
 #ifdef __OBJC__
+    #import <AppKit/AppKit.h>
+    #import "ZKSwizzle.h"
     #import <Cocoa/Cocoa.h>
 #else
     #include <stdbool.h>
@@ -23,6 +25,7 @@ extern BOOL gIsEnabled;
 extern NSInteger gBlurPasses;
 extern CGFloat gBlurRadius;
 extern CGFloat gTransparency;
+extern BOOL gDisableWindowShadow;
 
 // Window Behavior
 extern BOOL gDisableTitlebar;
