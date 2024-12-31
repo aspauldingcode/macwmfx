@@ -1,8 +1,8 @@
 // #import "macwmfx_globals.h"
 
-// ZKSwizzleInterface(BS_NSWindow_Traffic, NSWindow, NSWindow)
+// ZKSwizzleInterface(BS_NSWindow_Traffic_Windows, NSWindow, NSWindow)
 
-// @implementation BS_NSWindow_Traffic
+// @implementation BS_NSWindow_Traffic_Windows
 
 // - (nullable NSButton *)standardWindowButton:(NSWindowButton)b {
 //     NSButton *button = ZKOrig(NSButton*, b);
