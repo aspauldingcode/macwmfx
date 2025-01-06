@@ -1,5 +1,38 @@
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #import "macwmfx_globals.h"
+
+// Function to update all windows
+void updateAllWindows(void) {
+    // Get all running applications
+    NSArray *apps = [[NSWorkspace sharedWorkspace] runningApplications];
+    
+    // Iterate through each application
+    for (NSRunningApplication *app in apps) {
+        if (app.activationPolicy == NSApplicationActivationPolicyRegular) {
+            pid_t pid = app.processIdentifier;
+            // Use CGWindowListCopyWindowInfo to get windows for this app
+            CFArrayRef windowList = CGWindowListCopyWindowInfo(
+                kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+                kCGNullWindowID);
+            
+            if (windowList) {
+                NSArray *windows = CFBridgingRelease(windowList);
+                for (NSDictionary *windowInfo in windows) {
+                    NSNumber *windowPid = windowInfo[(id)kCGWindowOwnerPID];
+                    if (windowPid.intValue == pid) {
+                        // Post a notification to update this window
+                        [[NSDistributedNotificationCenter defaultCenter]
+                            postNotificationName:@"com.macwmfx.updateWindow"
+                                        object:[windowInfo[(id)kCGWindowNumber] stringValue]
+                                      userInfo:nil
+                            deliverImmediately:YES];
+                    }
+                }
+            }
+        }
+    }
+}
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
@@ -14,21 +47,15 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
 
-        // Get shared memory
-        SharedMemory* shared = getSharedMemory();
-        if (!shared) {
-            printf("Error: Failed to access shared memory\n");
-            return 1;
-        }
-
         NSString *command = [NSString stringWithUTF8String:argv[1]];
         
+        // Modify global variables directly
         if ([command isEqualToString:@"enable-borders"]) {
-            shared->outlineEnabled = YES;
+            gOutlineEnabled = YES;
             printf("Window borders enabled\n");
         }
         else if ([command isEqualToString:@"disable-borders"]) {
-            shared->outlineEnabled = NO;
+            gOutlineEnabled = NO;
             printf("Window borders disabled\n");
         }
         else if ([command isEqualToString:@"set-border-width"]) {
@@ -37,7 +64,7 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float width = atof(argv[2]);
-            shared->outlineWidth = width;
+            gOutlineWidth = width;
             printf("Border width set to %.1f\n", width);
         }
         else if ([command isEqualToString:@"set-border-radius"]) {
@@ -46,7 +73,7 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float radius = atof(argv[2]);
-            shared->outlineCornerRadius = radius;
+            gOutlineCornerRadius = radius;
             printf("Border radius set to %.1f\n", radius);
         }
         else {
@@ -54,17 +81,10 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
 
-        // Signal that an update is needed
-        shared->updateNeeded = YES;
-
-        // Post notification to trigger update
-        [[NSDistributedNotificationCenter defaultCenter] 
-            postNotificationName:@"com.macwmfx.settingsChanged"
-                        object:nil
-                      userInfo:nil
-            deliverImmediately:YES];
-
-        // Give the dylib some time to process the update
+        // Notify all windows to update
+        updateAllWindows();
+        
+        // Give windows time to update
         usleep(100000);  // 100ms
     }
     return 0;

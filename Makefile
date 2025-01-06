@@ -31,7 +31,8 @@ BLACKLIST_DEST = $(INSTALL_DIR)/libmacwmfx.dylib.blacklist
 DYLIB_FLAGS = -dynamiclib \
               -install_name @rpath/$(DYLIB_NAME) \
               -compatibility_version 1.0.0 \
-              -current_version 1.0.0
+              -current_version 1.0.0 \
+              -fvisibility=default
 
 # Default target
 all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
@@ -53,7 +54,7 @@ $(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
 
 # Build CLI tool
 $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
-	$(CC) $(CFLAGS) $(ARCHS) $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) -o $@ $(FRAMEWORKS) -Wl,-rpath,$(INSTALL_DIR)
+	$(CC) $(CFLAGS) $(ARCHS) $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) -o $@ $(FRAMEWORKS) -Wl,-rpath,$(INSTALL_DIR) -fvisibility=default
 
 # Install the dylib, CLI tool, and blacklist
 install: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)

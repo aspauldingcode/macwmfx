@@ -66,7 +66,7 @@ SharedMemory* getSharedMemory(void) {
 - (void)initializeGlobals;
 - (NSColor *)colorFromHexString:(NSString *)hexString;
 - (void)startListeningForUpdates;
-- (void)handleSettingsUpdate:(NSNotification *)notification;
+- (void)handleWindowUpdate:(NSNotification *)notification;
 
 @end
 
@@ -188,41 +188,25 @@ SharedMemory* getSharedMemory(void) {
 
 - (void)startListeningForUpdates {
     [[NSDistributedNotificationCenter defaultCenter] addObserver:self
-                                                      selector:@selector(handleSettingsUpdate:)
-                                                          name:@"com.macwmfx.settingsChanged"
+                                                      selector:@selector(handleWindowUpdate:)
+                                                          name:@"com.macwmfx.updateWindow"
                                                         object:nil];
 }
 
-- (void)handleSettingsUpdate:(NSNotification *)notification {
-    SharedMemory* shared = getSharedMemory();
-    if (!shared) return;
-    
-    if (shared->updateNeeded) {
-        // Update globals from shared memory
-        gOutlineEnabled = shared->outlineEnabled;
-        gOutlineWidth = shared->outlineWidth;
-        gOutlineCornerRadius = shared->outlineCornerRadius;
+- (void)handleWindowUpdate:(NSNotification *)notification {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Get the window number from the notification
+        NSString *windowNumberStr = notification.object;
+        if (!windowNumberStr) return;
         
-        // Reset update flag
-        shared->updateNeeded = NO;
+        NSInteger windowNumber = [windowNumberStr integerValue];
+        NSWindow *window = [NSApp windowWithWindowNumber:windowNumber];
         
-        // Update all windows on the main thread
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // Get all windows, including those from other apps
-            CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
-            if (windowList) {
-                NSArray *windows = CFBridgingRelease(windowList);
-                for (NSDictionary *windowInfo in windows) {
-                    NSNumber *windowID = windowInfo[(id)kCGWindowNumber];
-                    NSWindow *window = [NSApp windowWithWindowNumber:windowID.integerValue];
-                    if (window && [window respondsToSelector:@selector(updateBorderStyle)]) {
-                        [window performSelector:@selector(updateBorderStyle)];
-                        [window display];
-                    }
-                }
-            }
-        });
-    }
+        if (window && [window respondsToSelector:@selector(updateBorderStyle)]) {
+            [window performSelector:@selector(updateBorderStyle)];
+            [window display];
+        }
+    });
 }
 
 @end

@@ -35,27 +35,29 @@ typedef struct {
 SharedMemory* getSharedMemory(void);
 
 // Window Appearance
-extern BOOL gIsEnabled;
-extern NSInteger gBlurPasses;
-extern CGFloat gBlurRadius;
-extern CGFloat gTransparency;
-extern BOOL gDisableWindowShadow;
+__attribute__((visibility("default"))) extern BOOL gIsEnabled;
+__attribute__((visibility("default"))) extern NSInteger gBlurPasses;
+__attribute__((visibility("default"))) extern CGFloat gBlurRadius;
+__attribute__((visibility("default"))) extern CGFloat gTransparency;
 
 // Window Behavior
-extern BOOL gDisableTitlebar;
-extern BOOL gDisableTrafficLights;
-extern BOOL gDisableWindowSizeConstraints;
+__attribute__((visibility("default"))) extern BOOL gDisableTitlebar;
+__attribute__((visibility("default"))) extern BOOL gDisableTrafficLights;
+__attribute__((visibility("default"))) extern BOOL gDisableWindowSizeConstraints;
 
 // Window Outline
-extern BOOL gOutlineEnabled;
-extern CGFloat gOutlineWidth;
-extern CGFloat gOutlineCornerRadius;
-extern NSString *gOutlineType;
-extern NSColor *gOutlineActiveColor;
-extern NSColor *gOutlineInactiveColor;
+__attribute__((visibility("default"))) extern BOOL gOutlineEnabled;
+__attribute__((visibility("default"))) extern CGFloat gOutlineWidth;
+__attribute__((visibility("default"))) extern CGFloat gOutlineCornerRadius;
+__attribute__((visibility("default"))) extern NSString *gOutlineType;
+__attribute__((visibility("default"))) extern NSColor *gOutlineActiveColor;
+__attribute__((visibility("default"))) extern NSColor *gOutlineInactiveColor;
 
 // System Appearance
-extern NSString *gSystemColorSchemeVariant;
+__attribute__((visibility("default"))) extern NSString *gSystemColorSchemeVariant;
+
+// Window Shadow
+__attribute__((visibility("default"))) extern BOOL gDisableWindowShadow;
 
 // Flag to indicate if we're running from CLI
 extern BOOL gRunningFromCLI;

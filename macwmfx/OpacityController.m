@@ -1,37 +1,37 @@
-// //
-// //  WindowTransparencyController.m
-// //  AfloatX
-// //
-// //  Created by j on 12/6/19.
-// //  Copyright © 2019 j. All rights reserved.
-// //
+//
+//  WindowTransparencyController.m
+//  AfloatX
+//
+//  Created by j on 12/6/19.
+//  Copyright © 2019 j. All rights reserved.
+//
 
-// #import "macwmfx_globals.h"
+#import "macwmfx_globals.h"
 
-// @interface OpacityController : NSObject
-// @end
+@interface OpacityController : NSObject
+@end
 
-// @implementation OpacityController
+@implementation OpacityController
 
-// + (void)load {
-//     // Nothing needed here since we just want the swizzle
-// }
++ (void)load {
+    // Nothing needed here since we just want the swizzle
+}
 
-// @end
+@end
 
-// ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
+ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
 
-// @implementation BS_NSWindow_Opacity
+@implementation BS_NSWindow_Opacity
 
-// - (void)makeKeyAndOrderFront:(id)sender {
-//     ZKOrig(void, sender);
+- (void)makeKeyAndOrderFront:(id)sender {
+    ZKOrig(void, sender);
     
-//     NSWindow *window = (NSWindow *)self;
-//     CGFloat opacity = MAX(0.1, MIN(1.0, gTransparency));
+    NSWindow *window = (NSWindow *)self;
+    CGFloat opacity = MAX(0.1, MIN(1.0, gTransparency));
     
-//     window.alphaValue = opacity;
-//     window.opaque = (opacity >= 1.0);
-//     window.backgroundColor = [[NSColor windowBackgroundColor] colorWithAlphaComponent:opacity];
-// }
+    window.alphaValue = opacity;
+    window.opaque = (opacity >= 1.0);
+    window.backgroundColor = [[NSColor windowBackgroundColor] colorWithAlphaComponent:opacity];
+}
 
-// @end
+@end
