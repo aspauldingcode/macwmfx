@@ -1,51 +1,47 @@
-// #import "macwmfx_globals.h"
+#import "macwmfx_globals.h"
 
-// @interface WindowBordersInline : NSObject
-// @end
+@interface NSWindow (Private)
+- (BOOL)_getCornerRadius:(CGFloat *)radius;
+@end
 
-// @implementation WindowBordersInline
+ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
 
-// + (void)load {
-//     // Nothing needed here since we just want the swizzle
-// }
+@implementation BS_NSWindow_BordersInline
 
-// @end
+    - (void)updateBorderStyle {
+        if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"]) return;
+        
+        // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+        if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
+        
+        NSView *frameView = [self.contentView superview];
+        if (!frameView) return;
+        
+        // Get the window's corner radius from its mask
+        CGFloat windowCornerRadius = 0;
+        if ([self respondsToSelector:@selector(_getCornerRadius:)]) {
+            [self _getCornerRadius:&windowCornerRadius];
+        }
+        
+        frameView.wantsLayer = YES;
+        frameView.layer.borderWidth = gOutlineWidth;
+        frameView.layer.cornerRadius = windowCornerRadius;
+        frameView.layer.borderColor = self.isKeyWindow ? gOutlineActiveColor.CGColor : gOutlineInactiveColor.CGColor;
+    }
 
-// ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
+- (void)makeKeyAndOrderFront:(id)sender {
+    ZKOrig(void, sender);
+    [self updateBorderStyle];
+}
 
-// @implementation BS_NSWindow_BordersInline
+- (void)becomeKeyWindow {
+    ZKOrig(void);
+    [self updateBorderStyle];
+}
 
-// - (void)makeKeyAndOrderFront:(id)sender {
-//     ZKOrig(void, sender);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"]) return;
-    
-//     NSWindow *window = (NSWindow *)self;
-//     NSView *frameView = [window.contentView superview];
-//     if (!frameView) return;
-    
-//     frameView.wantsLayer = YES;
-//     frameView.layer.borderWidth = gOutlineWidth;
-//     frameView.layer.cornerRadius = gOutlineCornerRadius;
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
-// }
+- (void)resignKeyWindow {
+    ZKOrig(void);
+    [self updateBorderStyle];
+}
 
-// - (void)becomeKeyWindow {
-//     ZKOrig(void);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"]) return;
-    
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
-// }
-
-// - (void)resignKeyWindow {
-//     ZKOrig(void);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"]) return;
-    
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineInactiveColor.CGColor;
-// }
-
-// @end
+@end

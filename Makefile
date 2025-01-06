@@ -7,16 +7,23 @@ FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore
 # Project name and paths
 PROJECT = macwmfx
 DYLIB_NAME = lib$(PROJECT).dylib
+CLI_NAME = $(PROJECT)
 BUILD_DIR = build
 INSTALL_DIR = /usr/local/bin/ammonia/tweaks
+CLI_INSTALL_DIR = /usr/local/bin
 SOURCE_DIR = macwmfx
 
-# Source files
-SOURCES = $(wildcard $(SOURCE_DIR)/*.m) $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) $(wildcard $(SOURCE_DIR)/NSWindowMaskingShapes/*.m)
-OBJECTS = $(SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
+# Source files for dylib
+DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, $(wildcard $(SOURCE_DIR)/*.m)) $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) $(wildcard $(SOURCE_DIR)/NSWindowMaskingShapes/*.m)
+DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
+
+# CLI tool source and object
+CLI_SOURCE = $(SOURCE_DIR)/CLITool.m
+CLI_OBJECT = $(BUILD_DIR)/CLITool.o
 
 # Installation targets
 INSTALL_PATH = $(INSTALL_DIR)/$(DYLIB_NAME)
+CLI_INSTALL_PATH = $(CLI_INSTALL_DIR)/$(CLI_NAME)
 BLACKLIST_SOURCE = libmacwmfx.dylib.blacklist
 BLACKLIST_DEST = $(INSTALL_DIR)/libmacwmfx.dylib.blacklist
 
@@ -27,7 +34,7 @@ DYLIB_FLAGS = -dynamiclib \
               -current_version 1.0.0
 
 # Default target
-all: $(BUILD_DIR)/$(DYLIB_NAME)
+all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
 
 # Create build directory and subdirectories
 $(BUILD_DIR):
@@ -41,21 +48,27 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
 
 # Link dylib
-$(BUILD_DIR)/$(DYLIB_NAME): $(OBJECTS)
-	$(CC) $(DYLIB_FLAGS) $(ARCHS) $(OBJECTS) -o $@ $(FRAMEWORKS)
+$(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
+	$(CC) $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ $(FRAMEWORKS)
 
-# Install the dylib and blacklist
-install: $(BUILD_DIR)/$(DYLIB_NAME)
+# Build CLI tool
+$(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
+	$(CC) $(CFLAGS) $(ARCHS) $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) -o $@ $(FRAMEWORKS) -Wl,-rpath,$(INSTALL_DIR)
+
+# Install the dylib, CLI tool, and blacklist
+install: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
 	@sudo mkdir -p $(INSTALL_DIR)
-	@sudo cp $< $(INSTALL_PATH)
+	@sudo cp $(BUILD_DIR)/$(DYLIB_NAME) $(INSTALL_PATH)
 	@sudo chmod 755 $(INSTALL_PATH)
+	@sudo cp $(BUILD_DIR)/$(CLI_NAME) $(CLI_INSTALL_PATH)
+	@sudo chmod 755 $(CLI_INSTALL_PATH)
 	@if [ -f $(BLACKLIST_SOURCE) ]; then \
 		sudo cp $(BLACKLIST_SOURCE) $(BLACKLIST_DEST); \
 		sudo chmod 644 $(BLACKLIST_DEST); \
-		echo "Installed $(DYLIB_NAME) and blacklist to $(INSTALL_DIR)"; \
+		echo "Installed $(DYLIB_NAME), $(CLI_NAME), and blacklist"; \
 	else \
 		echo "Warning: $(BLACKLIST_SOURCE) not found"; \
-		echo "Installed $(DYLIB_NAME) to $(INSTALL_PATH)"; \
+		echo "Installed $(DYLIB_NAME) and $(CLI_NAME)"; \
 	fi
 
 # Just install existing binaries without building
@@ -64,16 +77,22 @@ install-only:
 		echo "Error: $(DYLIB_NAME) not found in build directory. Please build first."; \
 		exit 1; \
 	fi
+	@if [ ! -f $(BUILD_DIR)/$(CLI_NAME) ]; then \
+		echo "Error: $(CLI_NAME) not found in build directory. Please build first."; \
+		exit 1; \
+	fi
 	@sudo mkdir -p $(INSTALL_DIR)
 	@sudo cp $(BUILD_DIR)/$(DYLIB_NAME) $(INSTALL_PATH)
 	@sudo chmod 755 $(INSTALL_PATH)
+	@sudo cp $(BUILD_DIR)/$(CLI_NAME) $(CLI_INSTALL_PATH)
+	@sudo chmod 755 $(CLI_INSTALL_PATH)
 	@if [ -f $(BLACKLIST_SOURCE) ]; then \
 		sudo cp $(BLACKLIST_SOURCE) $(BLACKLIST_DEST); \
 		sudo chmod 644 $(BLACKLIST_DEST); \
-		echo "Installed $(DYLIB_NAME) and blacklist to $(INSTALL_DIR)"; \
+		echo "Installed $(DYLIB_NAME), $(CLI_NAME), and blacklist"; \
 	else \
 		echo "Warning: $(BLACKLIST_SOURCE) not found"; \
-		echo "Installed $(DYLIB_NAME) to $(INSTALL_PATH)"; \
+		echo "Installed $(DYLIB_NAME) and $(CLI_NAME)"; \
 	fi
 
 # Test target that builds, installs, and relaunches test applications
@@ -137,13 +156,15 @@ delete:
 	@pkill -9 "Safari" 2>/dev/null || true
 	@pkill -9 "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
 	@sudo rm -f $(INSTALL_PATH)
+	@sudo rm -f $(CLI_INSTALL_PATH)
 	@sudo rm -f $(BLACKLIST_DEST)
-	@echo "Deleted $(DYLIB_NAME) and blacklist from $(INSTALL_DIR)"
+	@echo "Deleted $(DYLIB_NAME), $(CLI_NAME), and blacklist"
 
 # Uninstall
 uninstall:
 	@sudo rm -f $(INSTALL_PATH)
+	@sudo rm -f $(CLI_INSTALL_PATH)
 	@sudo rm -f $(BLACKLIST_DEST)
-	@echo "Uninstalled $(DYLIB_NAME) and blacklist"
+	@echo "Uninstalled $(DYLIB_NAME), $(CLI_NAME), and blacklist"
 
 .PHONY: all clean install install-only uninstall test delete
