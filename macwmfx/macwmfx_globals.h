@@ -20,6 +20,20 @@
 extern "C" {
 #endif
 
+// Shared memory structure for IPC
+typedef struct {
+    BOOL outlineEnabled;
+    CGFloat outlineWidth;
+    CGFloat outlineCornerRadius;
+    BOOL updateNeeded;
+} SharedMemory;
+
+// Path for shared memory
+#define SHARED_MEMORY_PATH "/tmp/macwmfx_shared"
+
+// Function to get shared memory
+SharedMemory* getSharedMemory(void);
+
 // Window Appearance
 extern BOOL gIsEnabled;
 extern NSInteger gBlurPasses;
@@ -42,6 +56,9 @@ extern NSColor *gOutlineInactiveColor;
 
 // System Appearance
 extern NSString *gSystemColorSchemeVariant;
+
+// Flag to indicate if we're running from CLI
+extern BOOL gRunningFromCLI;
 
 #ifdef __cplusplus
 }

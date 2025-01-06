@@ -14,14 +14,21 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
 
+        // Get shared memory
+        SharedMemory* shared = getSharedMemory();
+        if (!shared) {
+            printf("Error: Failed to access shared memory\n");
+            return 1;
+        }
+
         NSString *command = [NSString stringWithUTF8String:argv[1]];
         
         if ([command isEqualToString:@"enable-borders"]) {
-            gOutlineEnabled = YES;
+            shared->outlineEnabled = YES;
             printf("Window borders enabled\n");
         }
         else if ([command isEqualToString:@"disable-borders"]) {
-            gOutlineEnabled = NO;
+            shared->outlineEnabled = NO;
             printf("Window borders disabled\n");
         }
         else if ([command isEqualToString:@"set-border-width"]) {
@@ -30,7 +37,7 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float width = atof(argv[2]);
-            gOutlineWidth = width;
+            shared->outlineWidth = width;
             printf("Border width set to %.1f\n", width);
         }
         else if ([command isEqualToString:@"set-border-radius"]) {
@@ -39,7 +46,7 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float radius = atof(argv[2]);
-            gOutlineCornerRadius = radius;
+            shared->outlineCornerRadius = radius;
             printf("Border radius set to %.1f\n", radius);
         }
         else {
@@ -47,12 +54,18 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
 
-        // Restart the ammonia injector to apply changes
-        printf("Restarting ammonia...\n");
-        system("sudo pkill -9 ammonia");
-        system("sudo launchctl bootout system /Library/LaunchDaemons/com.bedtime.ammonia.plist");
-        system("sudo launchctl bootstrap system /Library/LaunchDaemons/com.bedtime.ammonia.plist");
-        printf("Changes applied and ammonia restarted\n");
+        // Signal that an update is needed
+        shared->updateNeeded = YES;
+
+        // Post notification to trigger update
+        [[NSDistributedNotificationCenter defaultCenter] 
+            postNotificationName:@"com.macwmfx.settingsChanged"
+                        object:nil
+                      userInfo:nil
+            deliverImmediately:YES];
+
+        // Give the dylib some time to process the update
+        usleep(100000);  // 100ms
     }
     return 0;
 }

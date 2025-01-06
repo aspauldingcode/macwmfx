@@ -8,6 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 #import "macwmfx_globals.h"
+#import <sys/mman.h>
+#import <fcntl.h>
+#import <unistd.h>
 
 // Define the globals with default values
 BOOL gIsEnabled = YES;
@@ -30,21 +33,57 @@ NSString *gSystemColorSchemeVariant = @"dark";
 
 BOOL gDisableWindowShadow = NO;  // Default value is NO
 
+// Flag to indicate if we're running from CLI
+BOOL gRunningFromCLI = NO;
+
+// Shared memory implementation
+SharedMemory* getSharedMemory(void) {
+    int fd = open(SHARED_MEMORY_PATH, O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
+        NSLog(@"Failed to open shared memory");
+        return NULL;
+    }
+    
+    // Set the size of the file
+    ftruncate(fd, sizeof(SharedMemory));
+    
+    // Map the file into memory
+    SharedMemory* shared = mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    
+    if (shared == MAP_FAILED) {
+        NSLog(@"Failed to map shared memory");
+        return NULL;
+    }
+    
+    return shared;
+}
+
 @interface MacWMFX : NSObject
 
 + (instancetype)sharedInstance;
 - (void)loadFeaturesFromConfig;
 - (void)initializeGlobals;
 - (NSColor *)colorFromHexString:(NSString *)hexString;
+- (void)startListeningForUpdates;
+- (void)handleSettingsUpdate:(NSNotification *)notification;
 
 @end
 
 @implementation MacWMFX
 
 + (void)load {
+    // Check if we're running from CLI by looking at the process name
+    NSString *processName = [[NSProcessInfo processInfo] processName];
+    if ([processName isEqualToString:@"macwmfx"]) {
+        gRunningFromCLI = YES;
+        return;  // Skip loading config if running from CLI
+    }
+    
     // Initialize the singleton and load config on startup
     MacWMFX *instance = [self sharedInstance];
     [instance loadFeaturesFromConfig];
+    [instance startListeningForUpdates];
 }
 
 + (instancetype)sharedInstance {
@@ -145,6 +184,45 @@ BOOL gDisableWindowShadow = NO;  // Default value is NO
     }
     
     NSLog(@"Config loaded from JSON file");
+}
+
+- (void)startListeningForUpdates {
+    [[NSDistributedNotificationCenter defaultCenter] addObserver:self
+                                                      selector:@selector(handleSettingsUpdate:)
+                                                          name:@"com.macwmfx.settingsChanged"
+                                                        object:nil];
+}
+
+- (void)handleSettingsUpdate:(NSNotification *)notification {
+    SharedMemory* shared = getSharedMemory();
+    if (!shared) return;
+    
+    if (shared->updateNeeded) {
+        // Update globals from shared memory
+        gOutlineEnabled = shared->outlineEnabled;
+        gOutlineWidth = shared->outlineWidth;
+        gOutlineCornerRadius = shared->outlineCornerRadius;
+        
+        // Reset update flag
+        shared->updateNeeded = NO;
+        
+        // Update all windows on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // Get all windows, including those from other apps
+            CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+            if (windowList) {
+                NSArray *windows = CFBridgingRelease(windowList);
+                for (NSDictionary *windowInfo in windows) {
+                    NSNumber *windowID = windowInfo[(id)kCGWindowNumber];
+                    NSWindow *window = [NSApp windowWithWindowNumber:windowID.integerValue];
+                    if (window && [window respondsToSelector:@selector(updateBorderStyle)]) {
+                        [window performSelector:@selector(updateBorderStyle)];
+                        [window display];
+                    }
+                }
+            }
+        });
+    }
 }
 
 @end
