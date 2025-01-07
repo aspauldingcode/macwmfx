@@ -26,6 +26,9 @@ ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
 - (void)makeKeyAndOrderFront:(id)sender {
     ZKOrig(void, sender);
     
+    // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
+    
     NSWindow *window = (NSWindow *)self;
     CGFloat opacity = MAX(0.1, MIN(1.0, gTransparency));
     

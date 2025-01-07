@@ -10,13 +10,15 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
 @implementation BS_NSWindow_BordersInline
 
     - (void)updateBorderStyle {
-        if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"]) {
+        // Skip if borders are disabled or window is in fullscreen
+        if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"] || 
+            (self.styleMask & NSWindowStyleMaskFullScreen)) {
             // Clear existing borders if disabled
             NSView *frameView = [self.contentView superview];
             if (frameView) {
                 frameView.wantsLayer = YES;
                 frameView.layer.borderWidth = 0;
-                frameView.layer.cornerRadius = gOutlineCornerRadius;
+                frameView.layer.cornerRadius = 0;  // Reset corner radius when borders are disabled
                 frameView.layer.borderColor = nil;
             }
             return;
@@ -29,7 +31,7 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
         if (!frameView) return;
         
         // Get the window's corner radius from its mask
-        CGFloat windowCornerRadius = gOutlineCornerRadius;
+        CGFloat windowCornerRadius = 0;
         if ([self respondsToSelector:@selector(_getCornerRadius:)]) {
             [self _getCornerRadius:&windowCornerRadius];
         }
@@ -39,7 +41,7 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
         
         frameView.wantsLayer = YES;
         frameView.layer.borderWidth = gOutlineWidth;
-        frameView.layer.cornerRadius = windowCornerRadius;
+        frameView.layer.cornerRadius = gOutlineCornerRadius;
         frameView.layer.borderColor = self.isKeyWindow ? gOutlineActiveColor.CGColor : gOutlineInactiveColor.CGColor;
         
         [CATransaction commit];

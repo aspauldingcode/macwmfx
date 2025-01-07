@@ -44,6 +44,8 @@ int main(int argc, const char * argv[]) {
             printf("  disable-borders    Disable window borders\n");
             printf("  set-border-width   Set border width (requires additional value)\n");
             printf("  set-border-radius  Set border radius (requires additional value)\n");
+            printf("  enable-resize      Enable free window resizing\n");
+            printf("  disable-resize     Disable free window resizing\n");
             return 1;
         }
 
@@ -75,6 +77,14 @@ int main(int argc, const char * argv[]) {
             float radius = atof(argv[2]);
             gOutlineCornerRadius = radius;
             printf("Border radius set to %.1f\n", radius);
+        }
+        else if ([command isEqualToString:@"enable-resize"]) {
+            gDisableWindowSizeConstraints = YES;
+            printf("Free window resizing enabled\n");
+        }
+        else if ([command isEqualToString:@"disable-resize"]) {
+            gDisableWindowSizeConstraints = NO;
+            printf("Free window resizing disabled\n");
         }
         else {
             printf("Unknown command: %s\n", argv[1]);
