@@ -1,35 +1,43 @@
-// #import "macwmfx_globals.h"
+//
+//  NoMenubar.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
 
-// ZKSwizzleInterface(BS_NSMenu_NoMenubar, NSMenu, NSMenu)
+#import "macwmfx_globals.h"
 
-// @implementation BS_NSMenu_NoMenubar
+ZKSwizzleInterface(BS_NSMenu_NoMenubar, NSMenu, NSMenu)
 
-// - (void)setMenuBarVisible:(BOOL)visible {
-//     // Always set menubar to invisible
-//     ZKOrig(void, NO);
-// }
+@implementation BS_NSMenu_NoMenubar
 
-// - (BOOL)menuBarVisible {
-//     // Always return NO to indicate menubar is not visible
-//     return NO;
-// }
+- (void)setMenuBarVisible:(BOOL)visible {
+    // Always set menubar to invisible
+    ZKOrig(void, NO);
+}
 
-// @end
+- (BOOL)menuBarVisible {
+    // Always return NO to indicate menubar is not visible
+    return NO;
+}
 
-// ZKSwizzleInterface(BS_NSApplication_NoMenubar, NSApplication, NSApplication)
+@end
 
-// @implementation BS_NSApplication_NoMenubar
+ZKSwizzleInterface(BS_NSApplication_NoMenubar, NSApplication, NSApplication)
 
-// - (void)setPresentationOptions:(NSApplicationPresentationOptions)options {
-//     // Add the auto-hide menu bar option to whatever options are being set
-//     options |= NSApplicationPresentationAutoHideMenuBar;
-//     ZKOrig(void, options);
-// }
+@implementation BS_NSApplication_NoMenubar
 
-// - (NSApplicationPresentationOptions)presentationOptions {
-//     // Add auto-hide menu bar to the current presentation options
-//     NSApplicationPresentationOptions options = ZKOrig(NSApplicationPresentationOptions);
-//     return options | NSApplicationPresentationAutoHideMenuBar;
-// }
+- (void)setPresentationOptions:(NSApplicationPresentationOptions)options {
+    // Add the auto-hide menu bar option to whatever options are being set
+    options |= NSApplicationPresentationAutoHideMenuBar;
+    ZKOrig(void, options);
+}
 
-// @end
+- (NSApplicationPresentationOptions)presentationOptions {
+    // Add auto-hide menu bar to the current presentation options
+    NSApplicationPresentationOptions options = ZKOrig(NSApplicationPresentationOptions);
+    return options | NSApplicationPresentationAutoHideMenuBar;
+}
+
+@end

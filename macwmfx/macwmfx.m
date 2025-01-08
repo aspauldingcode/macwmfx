@@ -14,8 +14,11 @@
 
 // Define the globals with default values
 BOOL gIsEnabled = YES;
-NSInteger gBlurPasses = 1;
-CGFloat gBlurRadius = 10.0;
+BlurConfig gBlurConfig = {
+    .enabled = YES,
+    .passes = 1,
+    .radius = 10.0
+};
 CGFloat gTransparency = 1.0;
 
 BOOL gDisableTitlebar = NO;
@@ -111,8 +114,9 @@ SharedMemory* getSharedMemory(void) {
 
 - (void)initializeGlobals {
     gIsEnabled = YES;
-    gBlurPasses = 1;
-    gBlurRadius = 10.0;
+    gBlurConfig.enabled = YES;
+    gBlurConfig.passes = 1;
+    gBlurConfig.radius = 10.0;
     gTransparency = 1.0;
     
     gDisableTitlebar = NO;
@@ -130,7 +134,18 @@ SharedMemory* getSharedMemory(void) {
 }
 
 - (void)loadFeaturesFromConfig {
-    NSString *configPath = [NSString stringWithFormat:@"%@/.config/macwmfx/config", NSHomeDirectory()];
+    NSString *configPath = @"/Library/Application Support/macwmfx/config";
+    
+    // Create directory if it doesn't exist
+    NSString *directoryPath = @"/Library/Application Support/macwmfx";
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:directoryPath]) {
+        NSError *error = nil;
+        if (![fileManager createDirectoryAtPath:directoryPath withIntermediateDirectories:YES attributes:nil error:&error]) {
+            NSLog(@"Failed to create directory: %@", error);
+        }
+    }
+    
     NSData *configData = [NSData dataWithContentsOfFile:configPath];
     
     if (!configData) {
@@ -147,8 +162,12 @@ SharedMemory* getSharedMemory(void) {
     }
     
     // Window Appearance
-    gBlurPasses = [config[@"blurPasses"] integerValue] ?: gBlurPasses;
-    gBlurRadius = [config[@"blurRadius"] doubleValue] ?: gBlurRadius;
+    NSDictionary *blurConfig = config[@"blur"];
+    if (blurConfig) {
+        gBlurConfig.enabled = [blurConfig[@"enabled"] boolValue];
+        gBlurConfig.passes = [blurConfig[@"passes"] integerValue] ?: gBlurConfig.passes;
+        gBlurConfig.radius = [blurConfig[@"radius"] doubleValue] ?: gBlurConfig.radius;
+    }
     gTransparency = [config[@"transparency"] doubleValue] ?: gTransparency;
     gDisableWindowShadow = [config[@"disableWindowShadow"] boolValue];
     

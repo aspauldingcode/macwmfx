@@ -1,3 +1,11 @@
+//
+//  WindowBordersInline.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 #import "macwmfx_globals.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -9,7 +17,7 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
 
 @implementation BS_NSWindow_BordersInline
 
-    - (void)updateBorderStyle {
+   - (void)updateBorderStyle {
         // Skip if borders are disabled or window is in fullscreen
         if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"] || 
             (self.styleMask & NSWindowStyleMaskFullScreen)) {

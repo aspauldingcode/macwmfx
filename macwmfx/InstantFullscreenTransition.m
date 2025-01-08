@@ -1,3 +1,11 @@
+//
+//  InstantFullscreenTransition.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 #import "ZKSwizzle.h"
 #import <Cocoa/Cocoa.h>
 
@@ -8,7 +16,7 @@
  * 
  * 2. Trace C functions in Dock:
  *    frida-trace -n Dock -i "*space*"          # Trace all functions with "space" in name
- *    frida-trace -n Dock -i "*transition*"     # Trace transition-related functions
+ *   frida-trace -n Dock -i "*transition*"     # Trace transition-related functions
  *    frida-trace -n Dock -i "*animation*"      # Trace animation-related functions
  *    frida-trace -n Dock -i "*workspace*"      # Trace workspace-related functions
  * 

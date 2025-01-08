@@ -2,7 +2,7 @@
 CC = clang
 CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
-FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore
+FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -F/System/Library/PrivateFrameworks -framework SkyLight
 
 # Project name and paths
 PROJECT = macwmfx

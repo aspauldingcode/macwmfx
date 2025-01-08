@@ -1,3 +1,11 @@
+//
+//  CornerRadiusController.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 #import "macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSWindow_CornerRadius, NSWindow, NSWindow)
@@ -8,7 +16,7 @@ ZKSwizzleInterface(BS_NSWindow_CornerRadius, NSWindow, NSWindow)
     if (!(self.styleMask & NSWindowStyleMaskTitled)) {
         return ZKOrig(id);
     }
-    NSImage *squareCornerMask = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+   NSImage *squareCornerMask = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
     [squareCornerMask lockFocus];
     [[NSColor whiteColor] set];
     NSRectFill(NSMakeRect(0, 0, 1, 1));

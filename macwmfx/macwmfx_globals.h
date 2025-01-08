@@ -1,3 +1,11 @@
+//
+//  macwmfx_globals.h
+// macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 // Create a new header file for globals
 #ifndef MACWMFX_GLOBALS_H
 #define MACWMFX_GLOBALS_H
@@ -8,7 +16,7 @@
     #import <Cocoa/Cocoa.h>
 #else
     #include <stdbool.h>
-    typedef bool BOOL;
+   typedef bool BOOL;
     typedef long NSInteger;
     typedef float CGFloat;
     typedef struct NSColor NSColor;
@@ -34,10 +42,16 @@ typedef struct {
 // Function to get shared memory
 SharedMemory* getSharedMemory(void);
 
+// Blur configuration struct
+typedef struct {
+    BOOL enabled;
+    NSInteger passes;
+    CGFloat radius;
+} BlurConfig;
+
 // Window Appearance
 __attribute__((visibility("default"))) extern BOOL gIsEnabled;
-__attribute__((visibility("default"))) extern NSInteger gBlurPasses;
-__attribute__((visibility("default"))) extern CGFloat gBlurRadius;
+__attribute__((visibility("default"))) extern BlurConfig gBlurConfig;
 __attribute__((visibility("default"))) extern CGFloat gTransparency;
 
 // Window Behavior

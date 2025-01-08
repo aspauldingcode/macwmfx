@@ -1,53 +1,57 @@
-// #import <CoreImage/CoreImage.h>
-// #import "macwmfx_globals.h"
-// #import <objc/runtime.h>
+//
+//  BlurController.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
 
-// ZKSwizzleInterface(BS_NSWindow_Blur, NSWindow, NSWindow)
+#import <CoreImage/CoreImage.h>
+#import "macwmfx_globals.h"
+#import <objc/runtime.h>
+#import <QuartzCore/QuartzCore.h>
 
-// @implementation BS_NSWindow_Blur
+// This controller adds a red background to windows
+ZKSwizzleInterface(BS_NSWindow_Blur, NSWindow, NSWindow)
 
-// - (void)makeKeyAndOrderFront:(id)sender {
-//     ZKOrig(void, sender);
-//     [self applyBlurEffect];
-// }
+@implementation BS_NSWindow_Blur
 
-// - (void)applyBlurEffect {
-//     NSWindow *window = (NSWindow *)self;
-//     NSView *contentView = window.contentView;
+-(void)makeKeyAndOrderFront:(id)sender {
+    ZKOrig(void, sender);
+    [self setupRedBackgroundLayer];
+}
+
+- (void)setupRedBackgroundLayer {
+    if (!gBlurConfig.enabled) return;
     
-//     // Only proceed if we have valid blur settings
-//     if (gBlurPasses <= 0 || gBlurRadius <= 0) return;
+    // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
     
-//     // Create visual effect view if needed
-//     NSVisualEffectView *blurView = objc_getAssociatedObject(window, "blurView");
-//     if (!blurView) {
-//         blurView = [[NSVisualEffectView alloc] initWithFrame:contentView.bounds];
-//         blurView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-//         blurView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-//         blurView.material = NSVisualEffectMaterialWindowBackground;
-//         blurView.state = NSVisualEffectStateActive;
-        
-//         // Store the blur view
-//         objc_setAssociatedObject(window, "blurView", blurView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        
-//         // Insert blur view behind content
-//         [contentView addSubview:blurView positioned:NSWindowBelow relativeTo:nil];
-//     }
+    NSView *contentView = [self contentView];
+    if (!contentView) return;
     
-//     // Make sure the window can show the blur
-//     window.opaque = NO;
-//     window.backgroundColor = [NSColor clearColor];
+    // Check if red background already exists
+    for (NSView *subview in contentView.subviews) {
+        if (CGColorEqualToColor(subview.layer.backgroundColor, [[NSColor redColor] CGColor])) {
+            return;
+        }
+    }
     
-//     // Apply additional blur if needed
-//     if (gBlurPasses > 1) {
-//         NSMutableArray *filters = [NSMutableArray array];
-//         for (NSInteger i = 0; i < gBlurPasses; i++) {
-//             CIFilter *blur = [CIFilter filterWithName:@"CIGaussianBlur"];
-//             [blur setValue:@(gBlurRadius) forKey:@"inputRadius"];
-//             [filters addObject:blur];
-//         }
-//         blurView.layer.backgroundFilters = filters;
-//     }
-// }
+    // Create a view for the red background
+    NSView *redBackgroundView = [[NSView alloc] initWithFrame:contentView.bounds];
+    redBackgroundView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    redBackgroundView.wantsLayer = YES;
+    
+    // Set solid red background color with no transparency
+    redBackgroundView.layer.backgroundColor = [[NSColor redColor] CGColor];
+    redBackgroundView.layer.opacity = 1.0;
+    
+    // Add background view at the bottom of the view hierarchy
+    [contentView addSubview:redBackgroundView positioned:NSWindowBelow relativeTo:nil];
+    
+    // Make window background clear to allow red background to show through
+    self.backgroundColor = [NSColor clearColor];
+    self.opaque = NO;
+}
 
-// @end
+@end

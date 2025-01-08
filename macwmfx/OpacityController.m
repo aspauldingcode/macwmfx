@@ -1,9 +1,9 @@
 //
-//  WindowTransparencyController.m
-//  AfloatX
+//  OpacityController.m
+//  macwmfx
 //
-//  Created by j on 12/6/19.
-//  Copyright © 2019 j. All rights reserved.
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
 #import "macwmfx_globals.h"
@@ -32,9 +32,20 @@ ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
     NSWindow *window = (NSWindow *)self;
     CGFloat opacity = MAX(0.1, MIN(1.0, gTransparency));
     
-    window.alphaValue = opacity;
-    window.opaque = (opacity >= 1.0);
-    window.backgroundColor = [[NSColor windowBackgroundColor] colorWithAlphaComponent:opacity];
+    // Find all subviews except the red background view
+    NSView *contentView = window.contentView;
+    CGColorRef redColor = [[NSColor redColor] CGColor];
+    for (NSView *subview in contentView.subviews) {
+        // Skip the red background view (which is positioned at NSWindowBelow)
+        if (CGColorEqualToColor(subview.layer.backgroundColor, redColor)) {
+            continue;
+        }
+        subview.alphaValue = opacity;
+    }
+    
+    // Keep window background clear to not interfere with the red background
+    window.backgroundColor = [NSColor clearColor];
+    window.opaque = NO;
 }
 
 @end

@@ -1,51 +1,59 @@
-// #import "macwmfx_globals.h"
+//
+//  WindowBordersOutline.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
 
-// @interface WindowBordersOutline : NSObject
-// @end
+#import "macwmfx_globals.h"
 
-// @implementation WindowBordersOutline
+@interface WindowBordersOutline : NSObject
+@end
 
-// + (void)load {
-//     // Nothing needed here since we just want the swizzle
-// }
+@implementation WindowBordersOutline
 
-// @end
++ (void)load {
+    // Nothing needed here since we just want the swizzle
+}
 
-// ZKSwizzleInterface(BS_NSWindow_BordersOutline, NSWindow, NSWindow)
+@end
 
-// @implementation BS_NSWindow_BordersOutline
+ZKSwizzleInterface(BS_NSWindow_BordersOutline, NSWindow, NSWindow)
 
-// - (void)makeKeyAndOrderFront:(id)sender {
-//     ZKOrig(void, sender);
+@implementation BS_NSWindow_BordersOutline
+
+- (void)makeKeyAndOrderFront:(id)sender {
+    ZKOrig(void, sender);
     
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
+    if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
     
-//     NSWindow *window = (NSWindow *)self;
-//     NSView *frameView = [window.contentView superview];
-//     if (!frameView) return;
+    NSWindow *window = (NSWindow *)self;
+    NSView *frameView = [window.contentView superview];
+    if (!frameView) return;
     
-//     frameView.wantsLayer = YES;
-//     frameView.layer.borderWidth = gOutlineWidth;
-//     frameView.layer.cornerRadius = gOutlineCornerRadius;
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
-// }
+    frameView.wantsLayer = YES;
+    frameView.layer.borderWidth = gOutlineWidth;
+    frameView.layer.cornerRadius = gOutlineCornerRadius;
+    frameView.layer.borderColor = gOutlineActiveColor.CGColor;
+}
 
-// - (void)becomeKeyWindow {
-//     ZKOrig(void);
+- (void)becomeKeyWindow {
+    ZKOrig(void);
     
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
+    if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
     
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
-// }
+    NSView *frameView = [self.contentView superview];
+    frameView.layer.borderColor = gOutlineActiveColor.CGColor;
+}
 
-// - (void)resignKeyWindow {
-//     ZKOrig(void);
+- (void)resignKeyWindow {
+    ZKOrig(void);
     
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
+    if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
     
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineInactiveColor.CGColor;
-// }
+    NSView *frameView = [self.contentView superview];
+    frameView.layer.borderColor = gOutlineInactiveColor.CGColor;
+}
 
-// @end
+@end

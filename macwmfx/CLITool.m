@@ -1,3 +1,11 @@
+//
+//  CLITool.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import "macwmfx_globals.h"
@@ -8,7 +16,7 @@ void updateAllWindows(void) {
     NSArray *apps = [[NSWorkspace sharedWorkspace] runningApplications];
     
     // Iterate through each application
-    for (NSRunningApplication *app in apps) {
+   for (NSRunningApplication *app in apps) {
         if (app.activationPolicy == NSApplicationActivationPolicyRegular) {
             pid_t pid = app.processIdentifier;
             // Use CGWindowListCopyWindowInfo to get windows for this app

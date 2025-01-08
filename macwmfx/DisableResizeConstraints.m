@@ -1,3 +1,11 @@
+//
+//  DisableResizeConstraints.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
 #import "macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
@@ -8,7 +16,7 @@ ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
     ZKOrig(void, sender);
     
     // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
-    if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
+   if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
     
     // Skip if window is a panel, sheet, or other special window type
     if (self.styleMask & (NSWindowStyleMaskHUDWindow | 
