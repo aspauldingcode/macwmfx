@@ -6,7 +6,8 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import <Cocoa/Cocoa.h>
+#import "../../headers/macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSWindow_TitleBar, NSWindow, NSWindow)
 
@@ -15,8 +16,11 @@ ZKSwizzleInterface(BS_NSWindow_TitleBar, NSWindow, NSWindow)
 - (void)makeKeyAndOrderFront:(id)sender {
     ZKOrig(void, sender);
     
-    // Disable title bar if the setting is enabled
-    if (gDisableTitlebar) {
+    // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
+    
+    // Disable title bar if the config has titlebars disabled
+    if (!gTitlebarConfig.enabled) {
         [self disableTitleBar];
     }
 }

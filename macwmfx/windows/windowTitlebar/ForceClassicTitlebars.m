@@ -6,7 +6,9 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import <Cocoa/Cocoa.h>
+#import <objc/runtime.h>
+#import "../../headers/macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSWindow_TitleBar_Classic, NSWindow, NSWindow)
 
@@ -16,7 +18,12 @@ static const CGFloat kForcedTitlebarHeight = 50.0;
 
 - (void)makeKeyAndOrderFront:(id)sender {
     ZKOrig(void, sender);
-    if (![self isKindOfClass:[NSPanel class]] && ![self isKindOfClass:[NSMenu class]]) {
+    
+    // Skip if this is not a regular window
+    if ([self isKindOfClass:[NSPanel class]] || [self isKindOfClass:[NSMenu class]]) return;
+    
+    // Force classic titlebar if the config has classic titlebars enabled
+    if (gTitlebarConfig.forceClassic) {
         [self forceClassicTitleBar];
     }
 }

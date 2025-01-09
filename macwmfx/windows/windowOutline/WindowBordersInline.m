@@ -6,7 +6,8 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import <Cocoa/Cocoa.h>
+#import "../../headers/macwmfx_globals.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface NSWindow (Private)
@@ -19,7 +20,7 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
 
    - (void)updateBorderStyle {
         // Skip if borders are disabled or window is in fullscreen
-        if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"inline"] || 
+        if (!gOutlineConfig.enabled || ![gOutlineConfig.type isEqualToString:@"inline"] || 
             (self.styleMask & NSWindowStyleMaskFullScreen)) {
             // Clear existing borders if disabled
             NSView *frameView = [self.contentView superview];
@@ -48,9 +49,9 @@ ZKSwizzleInterface(BS_NSWindow_BordersInline, NSWindow, NSWindow)
         [CATransaction setDisableActions:YES];  // Disable animations
         
         frameView.wantsLayer = YES;
-        frameView.layer.borderWidth = gOutlineWidth;
-        frameView.layer.cornerRadius = gOutlineCornerRadius;
-        frameView.layer.borderColor = self.isKeyWindow ? gOutlineActiveColor.CGColor : gOutlineInactiveColor.CGColor;
+        frameView.layer.borderWidth = gOutlineConfig.width;
+        frameView.layer.cornerRadius = gOutlineConfig.cornerRadius;
+        frameView.layer.borderColor = self.isKeyWindow ? gOutlineConfig.activeColor.CGColor : gOutlineConfig.inactiveColor.CGColor;
         
         [CATransaction commit];
         

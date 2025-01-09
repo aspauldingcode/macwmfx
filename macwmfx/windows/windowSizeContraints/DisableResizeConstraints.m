@@ -6,7 +6,8 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import <Cocoa/Cocoa.h>
+#import "../../headers/macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
 
@@ -16,7 +17,7 @@ ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
     ZKOrig(void, sender);
     
     // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
-   if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) return;
     
     // Skip if window is a panel, sheet, or other special window type
     if (self.styleMask & (NSWindowStyleMaskHUDWindow | 
@@ -35,8 +36,8 @@ ZKSwizzleInterface(BS_NSWindow_Resize, NSWindow, NSWindow)
     if (!NSEqualSizes(minContentSize, NSZeroSize) && !NSEqualSizes(maxContentSize, NSZeroSize) &&
         NSEqualSizes(minContentSize, maxContentSize)) return;
     
-    // Disable resize constraints if the setting is enabled
-    if (gDisableWindowSizeConstraints) {
+    // Only disable resize constraints if the config has constraints disabled
+    if (!gWindowSizeConstraintsConfig.enabled) {
         [self disableResizeConstraints];
     }
 }

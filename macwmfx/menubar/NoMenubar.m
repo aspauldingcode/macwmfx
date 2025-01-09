@@ -6,7 +6,7 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import "../headers/macwmfx_globals.h"
 
 ZKSwizzleInterface(BS_NSMenu_NoMenubar, NSMenu, NSMenu)
 

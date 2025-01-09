@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = clang
-CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle
+CFLAGS = -fobjc-arc -Wall -Wextra -O2 -I$(SOURCE_DIR) -I$(SOURCE_DIR)/ZKSwizzle -I$(SOURCE_DIR)/headers -I$(SOURCE_DIR)/config
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
 FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -F/System/Library/PrivateFrameworks -framework SkyLight
 
@@ -14,7 +14,15 @@ CLI_INSTALL_DIR = /usr/local/bin
 SOURCE_DIR = macwmfx
 
 # Source files for dylib
-DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, $(wildcard $(SOURCE_DIR)/*.m)) $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) $(wildcard $(SOURCE_DIR)/NSWindowMaskingShapes/*.m)
+DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
+    $(wildcard $(SOURCE_DIR)/*.m) \
+    $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) \
+    $(wildcard $(SOURCE_DIR)/config/*.m) \
+    $(wildcard $(SOURCE_DIR)/dock/*.m) \
+    $(wildcard $(SOURCE_DIR)/menubar/*.m) \
+    $(wildcard $(SOURCE_DIR)/spaces/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/*.m))
+
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 
 # CLI tool source and object
@@ -41,7 +49,11 @@ all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)/ZKSwizzle
-	@mkdir -p $(BUILD_DIR)/NSWindowMaskingShapes
+	@mkdir -p $(BUILD_DIR)/config
+	@mkdir -p $(BUILD_DIR)/dock
+	@mkdir -p $(BUILD_DIR)/menubar
+	@mkdir -p $(BUILD_DIR)/spaces
+	@mkdir -p $(BUILD_DIR)/windows
 
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)

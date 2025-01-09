@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Alexander S Zielenski. All rights reserved.
 //
 
-#import "ZKSwizzle.h"
+#import "../headers/ZKSwizzle.h"
 static NSMutableDictionary *classTable;
 
 @interface NSObject (ZKSwizzle)

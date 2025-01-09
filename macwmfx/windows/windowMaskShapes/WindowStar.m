@@ -1,6 +1,14 @@
-// #import <Cocoa/Cocoa.h>
-// #import <QuartzCore/QuartzCore.h>
-// #import "ZKSwizzle.h"
+//
+//  WindowStar.m
+//  macwmfx
+//
+//  Created by Alex "aspauldingcode" on 11/13/24.
+//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+//
+
+#import "../../headers/macwmfx_globals.h"
+#import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
 
 // @interface NSWindow (Private)
 // - (id)_cornerMask;

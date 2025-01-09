@@ -6,7 +6,7 @@
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
 
-#import "macwmfx_globals.h"
+#import "../../headers/macwmfx_globals.h"
 
 // @interface AlwaysOnTopController : NSObject
 // @end

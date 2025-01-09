@@ -8,7 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import "macwmfx_globals.h"
+#import "headers/macwmfx_globals.h"
+#import "headers/ConfigParser.h"
 
 // Function to update all windows
 void updateAllWindows(void) {
@@ -16,7 +17,7 @@ void updateAllWindows(void) {
     NSArray *apps = [[NSWorkspace sharedWorkspace] runningApplications];
     
     // Iterate through each application
-   for (NSRunningApplication *app in apps) {
+    for (NSRunningApplication *app in apps) {
         if (app.activationPolicy == NSApplicationActivationPolicyRegular) {
             pid_t pid = app.processIdentifier;
             // Use CGWindowListCopyWindowInfo to get windows for this app
@@ -44,6 +45,9 @@ void updateAllWindows(void) {
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
+        // Initialize config parser
+        [[ConfigParser sharedInstance] loadConfig];
+        
         // Check if we have at least one argument
         if (argc < 2) {
             printf("Usage: macwmfx <command>\n");
@@ -59,13 +63,13 @@ int main(int argc, const char * argv[]) {
 
         NSString *command = [NSString stringWithUTF8String:argv[1]];
         
-        // Modify global variables directly
+        // Modify configuration values
         if ([command isEqualToString:@"enable-borders"]) {
-            gOutlineEnabled = YES;
+            gOutlineConfig.enabled = true;
             printf("Window borders enabled\n");
         }
         else if ([command isEqualToString:@"disable-borders"]) {
-            gOutlineEnabled = NO;
+            gOutlineConfig.enabled = false;
             printf("Window borders disabled\n");
         }
         else if ([command isEqualToString:@"set-border-width"]) {
@@ -74,7 +78,7 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float width = atof(argv[2]);
-            gOutlineWidth = width;
+            gOutlineConfig.width = width;
             printf("Border width set to %.1f\n", width);
         }
         else if ([command isEqualToString:@"set-border-radius"]) {
@@ -83,15 +87,15 @@ int main(int argc, const char * argv[]) {
                 return 1;
             }
             float radius = atof(argv[2]);
-            gOutlineCornerRadius = radius;
+            gOutlineConfig.cornerRadius = radius;
             printf("Border radius set to %.1f\n", radius);
         }
         else if ([command isEqualToString:@"enable-resize"]) {
-            gDisableWindowSizeConstraints = YES;
+            gWindowSizeConstraintsConfig.enabled = false;
             printf("Free window resizing enabled\n");
         }
         else if ([command isEqualToString:@"disable-resize"]) {
-            gDisableWindowSizeConstraints = NO;
+            gWindowSizeConstraintsConfig.enabled = true;
             printf("Free window resizing disabled\n");
         }
         else {
