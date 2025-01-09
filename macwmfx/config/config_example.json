@@ -1,9 +1,18 @@
 {
+    "hotload": {
+        "enabled": true,
+        "interval": 1
+    },
     "spaces": {
         "enabled": true,
-        "instantFullscreen": true,
+        "instantFullscreen": false,
         "behavior": "default",
-        "names": ["1", "2", "3", "4"]
+        "names": [
+            "1",
+            "2",
+            "3",
+            "4"
+        ]
     },
     "window": {
         "blur": {
@@ -18,7 +27,8 @@
                 "enabled": true,
                 "title": "My Custom Window Title"
             },
-            "color": {
+            "customColor": {
+                "enabled": false,
                 "background": "32302f",
                 "foreground": "fbf1c7"
             },
@@ -26,26 +36,45 @@
             "size": 22
         },
         "trafficLights": {
-            "enabled": false,
-            "color": {
-                "stop": "fb4934",
-                "yield": "fabd2f",
-                "go": "b8bb26"
+            "enabled": true,
+            "customColor": {
+                "enabled": true,
+                "active": {
+                    "stop": "fb4934",
+                    "yield": "fabd2f",
+                    "go": "b8bb26"
+                },
+                "inactive": {
+                    "stop": "d5c4a1",
+                    "yield": "ebdbb2",
+                    "go": "fbf1c7"
+                },
+                "hover": {
+                    "stop": "fb4934",
+                    "yield": "fabd2f",
+                    "go": "b8bb26"
+                }
             },
             "style": "macOS",
+            "shape": "circle",
+            "order": "stop-yield-go",
             "size": 12,
-            "position": "top-left"
+            "position": "top-right"
         },
         "shadow": {
             "enabled": true,
-            "color": "32302f"
+            "customColor": {
+                "enabled": false,
+                "color": "32302f"
+            }
         },
         "sizeConstraints": {
             "enabled": true
         },
         "outline": {
             "enabled": false,
-            "color": {
+            "customColor": {
+                "enabled": true,
                 "active": "fbf1c7",
                 "inactive": "d5c4a1",
                 "stacked": "fb4934"
@@ -70,13 +99,14 @@
         "position": "bottom",
         "size": 48
     },
-    "systemColorScheme": {
+    "customSystemColorScheme": {
+        "enabled": true,
         "variant": "dark",
         "slug": "gruvbox-dark-soft",
         "colors": {
             "base00": "32302f",
             "base01": "3c3836",
-            "base02": "504945", 
+            "base02": "504945",
             "base03": "665c54",
             "base04": "bdae93",
             "base05": "d5c4a1",

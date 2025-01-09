@@ -70,14 +70,30 @@ typedef struct {
     const char *title;
 } CustomTitleConfig;
 
+// Traffic Lights Color State Config
+typedef struct {
+    NSString *stop;
+    NSString *yield;
+    NSString *go;
+} TrafficLightsColorState;
+
+// Traffic Lights Custom Color Config
 typedef struct {
     BOOL enabled;
-    NSColor *stopColor;
-    NSColor *yieldColor;
-    NSColor *goColor;
+    TrafficLightsColorState active;
+    TrafficLightsColorState inactive;
+    TrafficLightsColorState hover;
+} TrafficLightsColorConfig;
+
+// Traffic Lights Config
+typedef struct {
+    BOOL enabled;
     NSString *style;
-    CGFloat size;
+    NSString *shape;
+    NSString *order;
     NSString *position;
+    CGFloat size;
+    TrafficLightsColorConfig customColor;
 } TrafficLightsConfig;
 
 typedef struct {
@@ -129,8 +145,14 @@ typedef struct {
     SystemColors colors;
 } SystemColorConfig;
 
+typedef struct {
+    BOOL enabled;
+    NSInteger interval;  // Interval in seconds to check for changes
+} HotloadConfig;
+
 // Global Configuration Variables
 __attribute__((visibility("default"))) extern BOOL gIsEnabled;
+__attribute__((visibility("default"))) extern HotloadConfig gHotloadConfig;
 __attribute__((visibility("default"))) extern BlurConfig gBlurConfig;
 __attribute__((visibility("default"))) extern TitlebarConfig gTitlebarConfig;
 __attribute__((visibility("default"))) extern CustomTitleConfig gCustomTitleConfig;
@@ -148,6 +170,7 @@ extern BOOL gRunningFromCLI;
 @interface ConfigParser : NSObject
 + (instancetype)sharedInstance;
 - (void)loadConfig;
+- (NSColor *)colorFromHexString:(NSString *)hexString;
 @end
 
 #ifdef __cplusplus

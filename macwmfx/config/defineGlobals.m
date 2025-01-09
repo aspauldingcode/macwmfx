@@ -11,10 +11,36 @@
 
 // Global Configuration Variables
 BOOL gIsEnabled = YES;
-BlurConfig gBlurConfig = {0};
+HotloadConfig gHotloadConfig = {NO, 1};  // Disabled by default, 1 second interval
+BlurConfig gBlurConfig = {NO, 20, 20.0};
 TitlebarConfig gTitlebarConfig = {0};
 CustomTitleConfig gCustomTitleConfig = {0};
-TrafficLightsConfig gTrafficLightsConfig = {0};
+TrafficLightsConfig gTrafficLightsConfig = {
+    .enabled = NO,
+    .style = nil,
+    .shape = nil,
+    .order = nil,
+    .position = nil,
+    .size = 0,
+    .customColor = {
+        .enabled = NO,
+        .active = {
+            .stop = nil,
+            .yield = nil,
+            .go = nil
+        },
+        .inactive = {
+            .stop = nil,
+            .yield = nil,
+            .go = nil
+        },
+        .hover = {
+            .stop = nil,
+            .yield = nil,
+            .go = nil
+        }
+    }
+};
 ShadowConfig gShadowConfig = {0};
 WindowSizeConstraintsConfig gWindowSizeConstraintsConfig = {0};
 OutlineConfig gOutlineConfig = {0};
