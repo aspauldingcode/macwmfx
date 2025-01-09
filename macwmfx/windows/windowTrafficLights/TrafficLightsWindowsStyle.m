@@ -1,17 +1,16 @@
 //
-//  TrafficLightsRightSideWindowsStyle.m
+//  TrafficLightsWindowsStyle.m
 //  macwmfx
 //
 //  Created by Alex "aspauldingcode" on 11/13/24.
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
-
 #import <Cocoa/Cocoa.h>
 #import "../../headers/macwmfx_globals.h"
 
-ZKSwizzleInterface(BS_NSWindow_Traffic_Windows_Right, NSWindow, NSWindow)
+ZKSwizzleInterface(BS_NSWindow_Traffic_Windows, NSWindow, NSWindow)
 
-@implementation BS_NSWindow_Traffic_Windows_Right
+@implementation BS_NSWindow_Traffic_Windows
 
 - (nullable NSButton *)standardWindowButton:(NSWindowButton)b {
     // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
@@ -27,15 +26,14 @@ ZKSwizzleInterface(BS_NSWindow_Traffic_Windows_Right, NSWindow, NSWindow)
     }
     
     NSButton *button = ZKOrig(NSButton*, b);
-    // Only proceed if traffic lights are enabled, position is "top-right", and style is "windows"
+    // Only proceed if traffic lights are enabled, style is "windows", and position is "top-left"
     if (!button || !gTrafficLightsConfig.enabled || 
-        ![gTrafficLightsConfig.position isEqualToString:@"top-right"] ||
-        ![gTrafficLightsConfig.style isEqualToString:@"windows"]) {
+        ![gTrafficLightsConfig.style isEqualToString:@"windows"] ||
+        ![gTrafficLightsConfig.position isEqualToString:@"top-left"]) {
         return button;
     }
     
     @try {
-        // Move traffic lights to the right side
         NSView *titleBar = [button superview];
         if (titleBar && ![titleBar.subviews containsObject:button]) {
             [titleBar addSubview:button];
@@ -44,7 +42,7 @@ ZKSwizzleInterface(BS_NSWindow_Traffic_Windows_Right, NSWindow, NSWindow)
         // Use default spacing of 10 (could be made configurable in the future)
         const CGFloat spacing = 10;
         
-        // Adjust the ordering: minimize, maximize, close (Windows style)
+        // Reorder the buttons to match Windows style (minimize, maximize, close)
         if (b == NSWindowCloseButton) {
             // Move close button to the rightmost position
             [button setFrameOrigin:NSMakePoint(titleBar.frame.size.width - button.frame.size.width - spacing, button.frame.origin.y)];
@@ -59,7 +57,7 @@ ZKSwizzleInterface(BS_NSWindow_Traffic_Windows_Right, NSWindow, NSWindow)
                 [button setHidden:YES];
             }
         } else if (b == NSWindowMiniaturizeButton) {
-            // Move minimize button to the left of maximize button (Windows style)
+            // Move minimize button to the left of maximize button
             NSButton *zoomButton = [self standardWindowButton:NSWindowZoomButton];
             if (zoomButton) {
                 CGFloat minimizeX = zoomButton.frame.origin.x - button.frame.size.width - spacing;

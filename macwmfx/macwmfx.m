@@ -8,7 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 #import "headers/macwmfx_globals.h"
-#import "headers/ConfigParser.h"
 #import <sys/mman.h>
 #import <fcntl.h>
 #import <unistd.h>

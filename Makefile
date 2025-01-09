@@ -21,7 +21,8 @@ DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
     $(wildcard $(SOURCE_DIR)/dock/*.m) \
     $(wildcard $(SOURCE_DIR)/menubar/*.m) \
     $(wildcard $(SOURCE_DIR)/spaces/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/*.m))
+    $(wildcard $(SOURCE_DIR)/windows/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/*/*.m))
 
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 
@@ -54,6 +55,7 @@ $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)/menubar
 	@mkdir -p $(BUILD_DIR)/spaces
 	@mkdir -p $(BUILD_DIR)/windows
+	@mkdir -p $(BUILD_DIR)/windows/windowTrafficLights
 
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
@@ -62,7 +64,7 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
 
 # Link dylib
 $(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
-	$(CC) $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ $(FRAMEWORKS)
+	$(CC) -v $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ $(FRAMEWORKS)
 
 # Build CLI tool
 $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)

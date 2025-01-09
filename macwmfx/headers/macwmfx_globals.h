@@ -51,11 +51,24 @@ typedef struct {
 
 typedef struct {
     BOOL enabled;
+    NSColor *activeColor;
+    NSColor *inactiveColor;
+} TitlebarAesthetics;
+
+typedef struct {
+    BOOL enabled;
+    BOOL forceClassic;
+    TitlebarAesthetics aesthetics;
     NSColor *backgroundColor;
     NSColor *foregroundColor;
     NSString *style;
     CGFloat size;
 } TitlebarConfig;
+
+typedef struct {
+    BOOL enabled;
+    const char *title;
+} CustomTitleConfig;
 
 typedef struct {
     BOOL enabled;
@@ -120,6 +133,7 @@ typedef struct {
 __attribute__((visibility("default"))) extern BOOL gIsEnabled;
 __attribute__((visibility("default"))) extern BlurConfig gBlurConfig;
 __attribute__((visibility("default"))) extern TitlebarConfig gTitlebarConfig;
+__attribute__((visibility("default"))) extern CustomTitleConfig gCustomTitleConfig;
 __attribute__((visibility("default"))) extern TrafficLightsConfig gTrafficLightsConfig;
 __attribute__((visibility("default"))) extern ShadowConfig gShadowConfig;
 __attribute__((visibility("default"))) extern WindowSizeConstraintsConfig gWindowSizeConstraintsConfig;
@@ -129,6 +143,12 @@ __attribute__((visibility("default"))) extern SystemColorConfig gSystemColorConf
 
 // Flag to indicate if we're running from CLI
 extern BOOL gRunningFromCLI;
+
+// ConfigParser interface
+@interface ConfigParser : NSObject
++ (instancetype)sharedInstance;
+- (void)loadConfig;
+@end
 
 #ifdef __cplusplus
 }

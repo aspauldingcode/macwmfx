@@ -9,62 +9,17 @@
 #import <Cocoa/Cocoa.h>
 #import "../headers/macwmfx_globals.h"
 
-// Define the globals with default values
+// Global Configuration Variables
 BOOL gIsEnabled = YES;
+BlurConfig gBlurConfig = {0};
+TitlebarConfig gTitlebarConfig = {0};
+CustomTitleConfig gCustomTitleConfig = {0};
+TrafficLightsConfig gTrafficLightsConfig = {0};
+ShadowConfig gShadowConfig = {0};
+WindowSizeConstraintsConfig gWindowSizeConstraintsConfig = {0};
+OutlineConfig gOutlineConfig = {0};
+TransparencyConfig gTransparencyConfig = {0};
+SystemColorConfig gSystemColorConfig = {0};
 
-BlurConfig gBlurConfig = {
-    .enabled = YES,
-    .passes = 1,
-    .radius = 10.0
-};
-
-TitlebarConfig gTitlebarConfig = {
-    .enabled = NO,
-    .backgroundColor = nil,
-    .foregroundColor = nil,
-    .style = @"modern",
-    .size = 22.0
-};
-
-TrafficLightsConfig gTrafficLightsConfig = {
-    .enabled = NO,
-    .stopColor = nil,
-    .yieldColor = nil,
-    .goColor = nil,
-    .style = @"macOS",
-    .size = 12.0,
-    .position = @"top-left"
-};
-
-ShadowConfig gShadowConfig = {
-    .enabled = NO,
-    .color = nil
-};
-
-WindowSizeConstraintsConfig gWindowSizeConstraintsConfig = {
-    .enabled = NO
-};
-
-OutlineConfig gOutlineConfig = {
-    .enabled = YES,
-    .activeColor = nil,
-    .inactiveColor = nil,
-    .stackedColor = nil,
-    .cornerRadius = 40.0,
-    .type = @"inline",
-    .width = 2.0
-};
-
-TransparencyConfig gTransparencyConfig = {
-    .enabled = YES,
-    .value = 0.5
-};
-
-SystemColorConfig gSystemColorConfig = {
-    .variant = @"dark",
-    .slug = @"gruvbox-dark-soft",
-    .colors = {0}  // Initialize all colors to nil
-};
-
-// Flag to indicate if we're running from CLI
+// CLI flag
 BOOL gRunningFromCLI = NO;

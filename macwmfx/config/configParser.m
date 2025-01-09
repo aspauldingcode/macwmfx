@@ -9,14 +9,6 @@
 #import <Cocoa/Cocoa.h>
 #import "../headers/macwmfx_globals.h"
 
-@interface ConfigParser : NSObject
-
-+ (instancetype)sharedInstance;
-- (void)loadConfig;
-- (NSColor *)colorFromHexString:(NSString *)hexString;
-
-@end
-
 @implementation ConfigParser
 
 + (instancetype)sharedInstance {
@@ -42,11 +34,12 @@
 }
 
 - (void)loadConfig {
-    NSString *configPath = @"/Library/Application Support/macwmfx/config";
+    NSString *appSupportPath = @"/Library/Application Support/macwmfx";
+    NSString *configPath = [appSupportPath stringByAppendingPathComponent:@"config.json"];
     NSData *configData = [NSData dataWithContentsOfFile:configPath];
     
     if (!configData) {
-        NSLog(@"No config found at %@", configPath);
+        NSLog(@"[macwmfx] No config found at %@", configPath);
         return;
     }
     
@@ -54,76 +47,101 @@
     NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
     
     if (error || !config) {
-        NSLog(@"Error parsing config file: %@", error);
+        NSLog(@"[macwmfx] Error parsing config file: %@", error);
         return;
     }
     
-    // Window Blur
-    NSDictionary *blurConfig = config[@"windowBlur"];
-    if (blurConfig) {
-        gBlurConfig.enabled = [blurConfig[@"enabled"] boolValue];
-        gBlurConfig.passes = [blurConfig[@"passes"] integerValue] ?: gBlurConfig.passes;
-        gBlurConfig.radius = [blurConfig[@"radius"] doubleValue] ?: gBlurConfig.radius;
-    }
-    
-    // Window Titlebar
-    NSDictionary *titlebarConfig = config[@"windowTitlebar"];
-    if (titlebarConfig) {
-        gTitlebarConfig.enabled = ![titlebarConfig[@"enabled"] boolValue];  // Inverted because our internal flag is "disable"
-        if (titlebarConfig[@"color"]) {
-            gTitlebarConfig.backgroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"background"]];
-            gTitlebarConfig.foregroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"foreground"]];
+    // Parse Window Configuration
+    NSDictionary *windowConfig = config[@"window"];
+    if (windowConfig) {
+        // Window Blur
+        NSDictionary *blurConfig = windowConfig[@"blur"];
+        if (blurConfig) {
+            gBlurConfig.enabled = [blurConfig[@"enabled"] boolValue];
+            gBlurConfig.passes = [blurConfig[@"passes"] integerValue] ?: gBlurConfig.passes;
+            gBlurConfig.radius = [blurConfig[@"radius"] doubleValue] ?: gBlurConfig.radius;
         }
-        gTitlebarConfig.style = [titlebarConfig[@"style"] copy] ?: @"modern";
-        gTitlebarConfig.size = [titlebarConfig[@"size"] doubleValue] ?: 22.0;
-    }
-    
-    // Window Traffic Lights
-    NSDictionary *trafficLightsConfig = config[@"windowTrafficLights"];
-    if (trafficLightsConfig) {
-        gTrafficLightsConfig.enabled = ![trafficLightsConfig[@"enabled"] boolValue];  // Inverted because our internal flag is "disable"
-        if (trafficLightsConfig[@"color"]) {
-            gTrafficLightsConfig.stopColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"stop"]];
-            gTrafficLightsConfig.yieldColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"yield"]];
-            gTrafficLightsConfig.goColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"go"]];
+        
+        // Window Titlebar
+        NSDictionary *titlebarConfig = windowConfig[@"titlebar"];
+        if (titlebarConfig) {
+            gTitlebarConfig.enabled = [titlebarConfig[@"enabled"] boolValue];
+            gTitlebarConfig.forceClassic = [titlebarConfig[@"forceClassic"] boolValue];
+            
+            // Parse aesthetics
+            NSDictionary *aestheticsConfig = titlebarConfig[@"aesthetics"];
+            if (aestheticsConfig) {
+                gTitlebarConfig.aesthetics.enabled = [aestheticsConfig[@"enabled"] boolValue];
+                gTitlebarConfig.aesthetics.activeColor = [self colorFromHexString:aestheticsConfig[@"activeColor"]];
+                gTitlebarConfig.aesthetics.inactiveColor = [self colorFromHexString:aestheticsConfig[@"inactiveColor"]];
+            }
+            
+            if (titlebarConfig[@"color"]) {
+                gTitlebarConfig.backgroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"background"]];
+                gTitlebarConfig.foregroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"foreground"]];
+            }
+            gTitlebarConfig.style = [titlebarConfig[@"style"] copy] ?: @"modern";
+            gTitlebarConfig.size = [titlebarConfig[@"size"] doubleValue] ?: 22.0;
+            
+            // Custom Title
+            NSDictionary *customTitleConfig = titlebarConfig[@"customTitle"];
+            if (customTitleConfig) {
+                gCustomTitleConfig.enabled = [customTitleConfig[@"enabled"] boolValue];
+                if (customTitleConfig[@"title"]) {
+                    NSString *title = customTitleConfig[@"title"];
+                    gCustomTitleConfig.title = [title UTF8String];
+                }
+            }
         }
-        gTrafficLightsConfig.style = [trafficLightsConfig[@"style"] copy] ?: @"macOS";
-        gTrafficLightsConfig.size = [trafficLightsConfig[@"size"] doubleValue] ?: 12.0;
-        gTrafficLightsConfig.position = [trafficLightsConfig[@"position"] copy] ?: @"top-left";
-    }
-    
-    // Window Shadow
-    NSDictionary *shadowConfig = config[@"windowShadow"];
-    if (shadowConfig) {
-        gShadowConfig.enabled = ![shadowConfig[@"enabled"] boolValue];  // Inverted because our internal flag is "disable"
-        gShadowConfig.color = [self colorFromHexString:shadowConfig[@"color"]];
-    }
-    
-    // Window Size Constraints
-    NSDictionary *sizeConstraintsConfig = config[@"windowSizeConstraints"];
-    if (sizeConstraintsConfig) {
-        gWindowSizeConstraintsConfig.enabled = ![sizeConstraintsConfig[@"enabled"] boolValue];  // Inverted because our internal flag is "disable"
-    }
-    
-    // Window Outline
-    NSDictionary *outlineConfig = config[@"windowOutline"];
-    if (outlineConfig) {
-        gOutlineConfig.enabled = [outlineConfig[@"enabled"] boolValue];
-        if (outlineConfig[@"color"]) {
-            gOutlineConfig.activeColor = [self colorFromHexString:outlineConfig[@"color"][@"active"]];
-            gOutlineConfig.inactiveColor = [self colorFromHexString:outlineConfig[@"color"][@"inactive"]];
-            gOutlineConfig.stackedColor = [self colorFromHexString:outlineConfig[@"color"][@"stacked"]];
+        
+        // Window Traffic Lights
+        NSDictionary *trafficLightsConfig = windowConfig[@"trafficLights"];
+        if (trafficLightsConfig) {
+            gTrafficLightsConfig.enabled = [trafficLightsConfig[@"enabled"] boolValue];
+            NSLog(@"[macwmfx] Traffic lights enabled: %d", gTrafficLightsConfig.enabled);
+            if (trafficLightsConfig[@"color"]) {
+                gTrafficLightsConfig.stopColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"stop"]];
+                gTrafficLightsConfig.yieldColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"yield"]];
+                gTrafficLightsConfig.goColor = [self colorFromHexString:trafficLightsConfig[@"color"][@"go"]];
+            }
+            gTrafficLightsConfig.style = [trafficLightsConfig[@"style"] copy] ?: @"macOS";
+            gTrafficLightsConfig.size = [trafficLightsConfig[@"size"] doubleValue] ?: 12.0;
+            gTrafficLightsConfig.position = [trafficLightsConfig[@"position"] copy] ?: @"top-left";
         }
-        gOutlineConfig.cornerRadius = [outlineConfig[@"cornerRadius"] doubleValue] ?: 40.0;
-        gOutlineConfig.type = [outlineConfig[@"type"] copy] ?: @"inline";
-        gOutlineConfig.width = [outlineConfig[@"width"] doubleValue] ?: 2.0;
-    }
-    
-    // Window Transparency
-    NSDictionary *transparencyConfig = config[@"windowTransparency"];
-    if (transparencyConfig) {
-        gTransparencyConfig.enabled = [transparencyConfig[@"enabled"] boolValue];
-        gTransparencyConfig.value = [transparencyConfig[@"value"] doubleValue] ?: 0.5;
+        
+        // Window Shadow
+        NSDictionary *shadowConfig = windowConfig[@"shadow"];
+        if (shadowConfig) {
+            gShadowConfig.enabled = [shadowConfig[@"enabled"] boolValue];
+            gShadowConfig.color = [self colorFromHexString:shadowConfig[@"color"]];
+        }
+        
+        // Window Size Constraints
+        NSDictionary *sizeConstraintsConfig = windowConfig[@"sizeConstraints"];
+        if (sizeConstraintsConfig) {
+            gWindowSizeConstraintsConfig.enabled = [sizeConstraintsConfig[@"enabled"] boolValue];
+        }
+        
+        // Window Outline
+        NSDictionary *outlineConfig = windowConfig[@"outline"];
+        if (outlineConfig) {
+            gOutlineConfig.enabled = [outlineConfig[@"enabled"] boolValue];
+            if (outlineConfig[@"color"]) {
+                gOutlineConfig.activeColor = [self colorFromHexString:outlineConfig[@"color"][@"active"]];
+                gOutlineConfig.inactiveColor = [self colorFromHexString:outlineConfig[@"color"][@"inactive"]];
+                gOutlineConfig.stackedColor = [self colorFromHexString:outlineConfig[@"color"][@"stacked"]];
+            }
+            gOutlineConfig.cornerRadius = [outlineConfig[@"cornerRadius"] doubleValue] ?: 40.0;
+            gOutlineConfig.type = [outlineConfig[@"type"] copy] ?: @"inline";
+            gOutlineConfig.width = [outlineConfig[@"width"] doubleValue] ?: 2.0;
+        }
+        
+        // Window Transparency
+        NSDictionary *transparencyConfig = windowConfig[@"transparency"];
+        if (transparencyConfig) {
+            gTransparencyConfig.enabled = [transparencyConfig[@"enabled"] boolValue];
+            gTransparencyConfig.value = [transparencyConfig[@"value"] doubleValue] ?: 0.5;
+        }
     }
     
     // System Color Scheme
@@ -136,7 +154,7 @@
         }
     }
     
-    NSLog(@"Config loaded from JSON file");
+    NSLog(@"[macwmfx] Config loaded from %@", configPath);
 }
 
 - (void)parseColorScheme:(NSDictionary *)colors {

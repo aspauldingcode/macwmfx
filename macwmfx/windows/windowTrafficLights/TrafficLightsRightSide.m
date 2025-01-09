@@ -27,9 +27,10 @@ ZKSwizzleInterface(BS_NSWindow_Traffic_Right, NSWindow, NSWindow)
     }
     
     NSButton *button = ZKOrig(NSButton*, b);
-    // Only proceed if traffic lights are enabled and position is "top-right"
+    // Only proceed if traffic lights are enabled, position is "top-right", and style is "macOS"
     if (!button || !gTrafficLightsConfig.enabled || 
-        strcmp(gTrafficLightsConfig.position, "top-right") != 0) {
+        ![gTrafficLightsConfig.position isEqualToString:@"top-right"] ||
+        ![gTrafficLightsConfig.style isEqualToString:@"macOS"]) {
         return button;
     }
     
@@ -43,28 +44,28 @@ ZKSwizzleInterface(BS_NSWindow_Traffic_Right, NSWindow, NSWindow)
         // Use default spacing of 10 (could be made configurable in the future)
         const CGFloat spacing = 10;
         
-        // Adjust the ordering: zoom, minimize, close
+        // Adjust the ordering: close, minimize, zoom (macOS style)
         if (b == NSWindowCloseButton) {
             // Move close button to the rightmost position
             [button setFrameOrigin:NSMakePoint(titleBar.frame.size.width - button.frame.size.width - spacing, button.frame.origin.y)];
-        } else if (b == NSWindowZoomButton) {
-            // Move zoom button to the left of close button
+        } else if (b == NSWindowMiniaturizeButton) {
+            // Move minimize button to the left of close button
             NSButton *closeButton = [self standardWindowButton:NSWindowCloseButton];
             if (closeButton) {
-                CGFloat zoomX = closeButton.frame.origin.x - button.frame.size.width - spacing;
-                [button setFrameOrigin:NSMakePoint(zoomX, button.frame.origin.y)];
-            } else {
-                // Hide zoom button if close button is not available
-                [button setHidden:YES];
-            }
-        } else if (b == NSWindowMiniaturizeButton) {
-            // Move minimize button to the left of zoom button
-            NSButton *zoomButton = [self standardWindowButton:NSWindowZoomButton];
-            if (zoomButton) {
-                CGFloat minimizeX = zoomButton.frame.origin.x - button.frame.size.width - spacing;
+                CGFloat minimizeX = closeButton.frame.origin.x - button.frame.size.width - spacing;
                 [button setFrameOrigin:NSMakePoint(minimizeX, button.frame.origin.y)];
             } else {
-                // Hide minimize button if zoom button is not available
+                // Hide minimize button if close button is not available
+                [button setHidden:YES];
+            }
+        } else if (b == NSWindowZoomButton) {
+            // Move zoom button to the left of minimize button
+            NSButton *minimizeButton = [self standardWindowButton:NSWindowMiniaturizeButton];
+            if (minimizeButton) {
+                CGFloat zoomX = minimizeButton.frame.origin.x - button.frame.size.width - spacing;
+                [button setFrameOrigin:NSMakePoint(zoomX, button.frame.origin.y)];
+            } else {
+                // Hide zoom button if minimize button is not available
                 [button setHidden:YES];
             }
         }

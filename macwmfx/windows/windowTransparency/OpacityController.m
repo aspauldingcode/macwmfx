@@ -37,8 +37,8 @@ ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
         return;
     }
     
-    // Only update opacity if transparency is enabled and opacity is set
-    if (gTransparencyConfig.enabled && gTransparencyConfig.opacity >= 0.0) {
+    // Check if transparency is enabled and has a valid value
+    if (gTransparencyConfig.enabled && gTransparencyConfig.value >= 0.0) {
         [self updateWindowOpacity];
     } else {
         [self resetWindowOpacity];
@@ -67,8 +67,8 @@ ZKSwizzleInterface(BS_NSWindow_Opacity, NSWindow, NSWindow)
     NSView *contentView = self.contentView;
     if (!contentView) return;
     
-    // Ensure opacity is within valid range (0.1 to 1.0)
-    CGFloat opacity = MAX(0.1, MIN(1.0, gTransparencyConfig.opacity));
+    // Clamp opacity between 0.1 and 1.0 to prevent completely invisible windows
+    CGFloat opacity = MAX(0.1, MIN(1.0, gTransparencyConfig.value));
     
     // Apply opacity to all subviews
     NSArray *subviews = [contentView.subviews copy];

@@ -27,8 +27,15 @@ ZKSwizzleInterface(BS_NSWindow_Traffic, NSWindow, NSWindow)
     }
     
     NSButton *button = ZKOrig(NSButton*, b);
-    if (!gTrafficLightsConfig.enabled && button) {
+    // Hide buttons when traffic lights are disabled in config
+    if (!button) return button;
+    
+    if (!gTrafficLightsConfig.enabled) {
+        NSLog(@"[macwmfx] Hiding traffic light button type: %lu", (unsigned long)b);
         [button setHidden:YES];
+    } else {
+        NSLog(@"[macwmfx] Showing traffic light button type: %lu", (unsigned long)b);
+        [button setHidden:NO];
     }
     return button;
 }

@@ -9,28 +9,37 @@
 #import <Cocoa/Cocoa.h>
 #import "../../headers/macwmfx_globals.h"
 
-ZKSwizzleInterface(BS_NSWindow_TitleBar_Custom, NSWindow, NSWindow)
+ZKSwizzleInterface(BS_NSWindow_CustomTitle, NSWindow, NSWindow)
 
-@implementation BS_NSWindow_TitleBar_Custom
+@implementation BS_NSWindow_CustomTitle
 
-- (void)makeKeyAndOrderFront:(id)sender {
-    ZKOrig(void, sender);
+- (void)setTitle:(NSString *)title {
+    // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) {
+        ZKOrig(void, title);
+        return;
+    }
     
-    // Skip if this is not a regular window
-    if ([self isKindOfClass:[NSPanel class]] || [self isKindOfClass:[NSMenu class]]) return;
-    
-    // Set custom title if configured
-    if (gTitlebarConfig.customTitle && gTitlebarConfig.customTitle[0] != '\0') {
-        [(NSWindow *)self setTitle:@(gTitlebarConfig.customTitle)];
+    // Apply custom title if enabled and available
+    if (gCustomTitleConfig.enabled && gCustomTitleConfig.title && gCustomTitleConfig.title[0] != '\0') {
+        [(NSWindow *)self setTitle:@(gCustomTitleConfig.title)];
+    } else {
+        ZKOrig(void, title);
     }
 }
 
-- (void)setTitle:(NSString *)title {
-    // Only override if custom title is configured
-    if (gTitlebarConfig.customTitle && gTitlebarConfig.customTitle[0] != '\0') {
-        ZKOrig(void, @(gTitlebarConfig.customTitle));
+- (void)setTitleWithRepresentedFilename:(NSString *)filename {
+    // Skip if this is not a regular window (e.g., menu, tooltip, etc.)
+    if (!(self.styleMask & NSWindowStyleMaskTitled)) {
+        ZKOrig(void, filename);
+        return;
+    }
+    
+    // Apply custom title if enabled and available
+    if (gCustomTitleConfig.enabled && gCustomTitleConfig.title && gCustomTitleConfig.title[0] != '\0') {
+        ZKOrig(void, @(gCustomTitleConfig.title));
     } else {
-        ZKOrig(void, title);
+        ZKOrig(void, filename);
     }
 }
 
