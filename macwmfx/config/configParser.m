@@ -121,8 +121,24 @@
             if (!gTrafficLightsConfig.enabled) {
                 @try {
                     NSButton *closeButton = [window standardWindowButton:NSWindowCloseButton];
+                    NSButton *minimizeButton = [window standardWindowButton:NSWindowMiniaturizeButton];
+                    NSButton *zoomButton = [window standardWindowButton:NSWindowZoomButton];
                     if (closeButton && closeButton.superview) {
                         for (NSView *view in closeButton.superview.subviews) {
+                            if ([view isKindOfClass:[NSButton class]]) {
+                                [(NSButton *)view setHidden:YES];
+                            }
+                        }
+                    }
+                    if (minimizeButton && minimizeButton.superview) {
+                        for (NSView *view in minimizeButton.superview.subviews) {
+                            if ([view isKindOfClass:[NSButton class]]) {
+                                [(NSButton *)view setHidden:YES];
+                            }
+                        }
+                    }
+                    if (zoomButton && zoomButton.superview) {
+                        for (NSView *view in zoomButton.superview.subviews) {
                             if ([view isKindOfClass:[NSButton class]]) {
                                 [(NSButton *)view setHidden:YES];
                             }
@@ -287,6 +303,7 @@
             gTrafficLightsConfig.shape = [trafficLightsConfig[@"shape"] copy] ?: @"circle";
             gTrafficLightsConfig.order = [trafficLightsConfig[@"order"] copy] ?: @"stop-yield-go";  // Default macOS order
             gTrafficLightsConfig.size = [trafficLightsConfig[@"size"] doubleValue] ?: 12.0;
+            gTrafficLightsConfig.padding = [trafficLightsConfig[@"padding"] doubleValue] ?: 0;
             gTrafficLightsConfig.position = [trafficLightsConfig[@"position"] copy] ?: @"top-left";
         }
         
@@ -399,15 +416,17 @@
     gTrafficLightsConfig.shape = [config[@"shape"] copy] ?: @"circle";
     gTrafficLightsConfig.order = [config[@"order"] copy] ?: @"stop-yield-go";  // Default macOS order
     gTrafficLightsConfig.size = [config[@"size"] doubleValue] ?: 12.0;
+    gTrafficLightsConfig.padding = [config[@"padding"] doubleValue] ?: 0;
     gTrafficLightsConfig.position = [config[@"position"] copy] ?: @"top-left";
     
-    NSLog(@"[macwmfx] Parsed traffic lights config: enabled=%d, style=%@, shape=%@, order=%@, position=%@, size=%.1f",
+    NSLog(@"[macwmfx] Parsed traffic lights config: enabled=%d, style=%@, shape=%@, order=%@, position=%@, size=%.1f, padding=%.1f",
           gTrafficLightsConfig.enabled,
           gTrafficLightsConfig.style,
           gTrafficLightsConfig.shape,
           gTrafficLightsConfig.order,
           gTrafficLightsConfig.position,
-          gTrafficLightsConfig.size);
+          gTrafficLightsConfig.size,
+          gTrafficLightsConfig.padding);
 }
 
 @end

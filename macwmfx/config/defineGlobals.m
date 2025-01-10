@@ -22,6 +22,7 @@ TrafficLightsConfig gTrafficLightsConfig = {
     .order = nil,
     .position = nil,
     .size = 0,
+    .padding = 0,
     .customColor = {
         .enabled = NO,
         .active = {

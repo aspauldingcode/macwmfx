@@ -59,6 +59,7 @@
             "shape": "circle",
             "order": "stop-yield-go",
             "size": 12,
+            "padding": 4,
             "position": "top-right"
         },
         "shadow": {

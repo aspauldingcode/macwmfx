@@ -93,6 +93,7 @@ typedef struct {
     NSString *order;
     NSString *position;
     CGFloat size;
+    CGFloat padding;
     TrafficLightsColorConfig customColor;
 } TrafficLightsConfig;
 
