@@ -3,7 +3,7 @@
 ![Preview](Preview.png)
 
 # Information:
-- macwmfx is a macOS tweak for ammonia injector that enables configurable WindowManager Effects to macOS, similar to what swayfx does for sway on linux.
+- macwmfx is a macOS tweak for ammonia injector that enables configurable WindowManager Effects to macOS, similar to what swayfx does for sway on linux. 
 - Authored by [aspauldingcode](https://github.com/aspauldingcode)
 - Inspired by:
   - [INTrafficLightsDisabler](https://github.com/indragiek/INTrafficLightsDisabler)
@@ -11,6 +11,7 @@
   - [AfloatX](https://github.com/jslegendre/AfloatX)
   - [Goodbye](https://github.com/MacEnhance/Goodbye)
 
+## NOTICE: this is work-in-progress. I'm working on refactoring, and I promise this product will be complete at some point. macOS users will finally have some configurable window management ricing features. For now, please sit tight. Feel free to contribute if you'd like, although prs may not be merged, until I find a repo layout I'm happy with. 
 
 # Features:
 - Configurable windowfx dotfile in ~/.config/macwmfx/config
