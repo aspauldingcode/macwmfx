@@ -38,9 +38,12 @@
 - (void)startFileMonitor {
     if (!gHotloadConfig.enabled) return;
     
+    // Stop existing monitor if any
+    [self stopFileMonitor];
+    
     int fd = open([self.configPath UTF8String], O_EVTONLY);
     if (fd < 0) {
-        NSLog(@"[macwmfx] Failed to open config file for monitoring");
+        NSLog(@"[macwmfx] Failed to open config file for monitoring: %s", strerror(errno));
         return;
     }
     
@@ -53,11 +56,18 @@
     __weak typeof(self) weakSelf = self;
     dispatch_source_set_event_handler(self.fileMonitor, ^{
         unsigned long flags = dispatch_source_get_data(weakSelf.fileMonitor);
-        dispatch_async(dispatch_get_main_queue(), ^{
+        
+        // Add a small delay to ensure file is fully written
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND)) {
                 NSLog(@"[macwmfx] Config file changed, reloading...");
                 [weakSelf loadConfig];
-                [weakSelf updateAllWindows];
+                [weakSelf notifyConfigChanged];
+                
+                // If file was deleted, restart monitor
+                if (flags & DISPATCH_VNODE_DELETE) {
+                    [weakSelf startFileMonitor];
+                }
             }
         });
     });
@@ -69,6 +79,7 @@
     
     // Start monitoring
     dispatch_resume(self.fileMonitor);
+    NSLog(@"[macwmfx] Started file monitor for config changes");
 }
 
 - (void)stopFileMonitor {
@@ -95,6 +106,13 @@
             // Skip if window is being dealloc'd or invalid
             if (!window || ![window isKindOfClass:[NSWindow class]]) {
                 continue;
+            }
+
+            // Update window shadows based on config
+            @try {
+                [window setHasShadow:gShadowConfig.enabled];
+            } @catch (NSException *e) {
+                NSLog(@"[macwmfx] Failed to update window shadow: %@", e);
             }
 
             // Update window borders if supported
@@ -186,6 +204,19 @@
                           green:((hexInt & 0x00FF00) >> 8) / 255.0
                            blue:(hexInt & 0x0000FF) / 255.0
                           alpha:1.0];
+}
+
+- (void)notifyConfigChanged {
+    // Send notification on both centers to ensure delivery
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"com.macwmfx.configChanged"
+                                                      object:nil];
+    
+    [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"com.macwmfx.configChanged"
+                                                                object:nil
+                                                              userInfo:nil
+                                                    deliverImmediately:YES];
+    
+    NSLog(@"[macwmfx] Posted config changed notifications");
 }
 
 - (void)loadConfig {
@@ -310,7 +341,11 @@
         // Window Shadow
         NSDictionary *shadowConfig = windowConfig[@"shadow"];
         if (shadowConfig) {
+            BOOL oldEnabled = gShadowConfig.enabled;
             gShadowConfig.enabled = [shadowConfig[@"enabled"] boolValue];
+            if (oldEnabled != gShadowConfig.enabled) {
+                NSLog(@"[macwmfx] Shadow config changed from %d to %d", oldEnabled, gShadowConfig.enabled);
+            }
             gShadowConfig.color = [self colorFromHexString:shadowConfig[@"color"]];
         }
         
