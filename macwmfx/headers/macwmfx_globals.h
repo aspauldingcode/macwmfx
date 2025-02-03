@@ -5,24 +5,12 @@
 //  Created by Alex "aspauldingcode" on 11/13/24.
 //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
 //
-
-// Create a new header file for globals
 #ifndef MACWMFX_GLOBALS_H
 #define MACWMFX_GLOBALS_H
 
-#ifdef __OBJC__
-    #import <AppKit/AppKit.h>
-    #import "ZKSwizzle.h"
-    #import <Cocoa/Cocoa.h>
-#else
-    #include <stdbool.h>
-   typedef bool BOOL;
-    typedef long NSInteger;
-    typedef float CGFloat;
-    typedef struct NSColor NSColor;
-    typedef struct NSString NSString;
-    #define nil NULL
-#endif
+#import <AppKit/AppKit.h>
+#import "ZKSwizzle.h"
+#import <Cocoa/Cocoa.h>
 
 #ifdef __cplusplus
 extern "C" {

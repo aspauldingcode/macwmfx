@@ -4,7 +4,7 @@ ISYSROOT := $(shell xcrun -sdk macosx --show-sdk-path)
 INCLUDE_PATH := $(shell xcrun -sdk macosx --show-sdk-platform-path)/Developer/SDKs/MacOSX.sdk/usr/include
 
 # Compiler and flags
-CC = clang
+CC = gcc
 CFLAGS = -fobjc-arc -Wall -Wextra -O2 \
     -I$(SOURCE_DIR) \
     -I$(SOURCE_DIR)/ZKSwizzle \
@@ -12,7 +12,7 @@ CFLAGS = -fobjc-arc -Wall -Wextra -O2 \
     -I$(SOURCE_DIR)/config \
     -isysroot $(SDKROOT) \
     -iframework $(SDKROOT)/System/Library/Frameworks \
-    -I/nix/store/*/clang-*/lib/clang/*/include
+    -I/nix/store/*/gcc-*/lib/gcc/*/include
 
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
 FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -F/System/Library/PrivateFrameworks -framework SkyLight

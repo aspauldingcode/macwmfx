@@ -1,9 +1,11 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
-    clang_16
-    llvmPackages_16.libcxx
+    clang_19
+    llvmPackages_19.libcxx
     darwin.apple_sdk.frameworks.Cocoa
     darwin.apple_sdk.frameworks.Foundation
     darwin.apple_sdk.frameworks.AppKit
@@ -14,7 +16,8 @@ pkgs.mkShell {
   ];
 
   shellHook = ''
-    export SDKROOT=${pkgs.darwin.apple_sdk.sdk}
-    export NIX_CFLAGS_COMPILE="-isystem ${pkgs.darwin.apple_sdk.sdk}/usr/include"
+    echo '#import <Cocoa/Cocoa.h>' > test.m
+    echo 'int main() { return 0; }' >> test.m
+    clang -framework Cocoa -isysroot $(xcrun --sdk macosx --show-sdk-path) test.m -o test
   '';
-} 
+}
