@@ -26,6 +26,7 @@
 
           # Create directories with cp
           sudo mkdir -p /usr/local/bin/ammonia/tweaks
+          sudo mkdir -p /Library/Application\ Support/macwmfx
 
           # Remove existing files/symlinks
           sudo rm -f /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib
