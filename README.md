@@ -27,12 +27,19 @@
 - Whitelist applications by bundle identifier
 - Blacklist applications by bundle identifier
 
-# Installation (WIP):
-1. Download and install [ammonia](https://github.com/CoreBedtime/ammonia/releases/latest) from bedtime. Also, make sure to disable SIP, library validation, and authenticated-root.
-2. git clone [macwmfx](https://github.com/aspauldingcode/macwmfx/)
-<!-- 2. Download [macwmfx](https://github.com/aspauldingcode/macwmfx/releases/latest) -->
-3. Compile macwmfx with `make`
-4. Install macwmfx with `make install`
+# Installation:
+1. Download and install [ammonia](https://github.com/CoreBedtime/ammonia/releases/latest) from bedtime. Also, make sure to disable SIP, library validation, and enable preview arm64e abi.
+2. Make sure you have [Nix](https://nixos.org/download) installed with flakes enabled
+3. Clone the repository:
+   ```bash
+   git clone https://github.com/aspauldingcode/macwmfx
+   cd macwmfx
+   ```
+4. Build and install using the flake:
+   ```bash
+   nix run
+   ```
+   This will build macwmfx and install it to `/usr/local/bin/ammonia/tweaks`
 
 ### Contributing:
 Feel free to modify and adapt this code for your own projects. However, please provide appropriate attribution rather than simply rebranding it. Be respectful of the open source community. If you make improvements, we welcome pull requests and contributions back to the project.

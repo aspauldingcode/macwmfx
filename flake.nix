@@ -19,6 +19,30 @@
         sdkRoot = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
         # Use system's Clang directly
         cc = "/usr/bin/clang";
+
+        # Installation script to symlink files to /usr/local/bin/ammonia/tweaks
+        installScript = pkgs.writeScript "install-macwmfx" ''
+          #!${pkgs.bash}/bin/bash
+
+          # Create directories with cp
+          sudo mkdir -p /usr/local/bin/ammonia/tweaks
+
+          # Remove existing files/symlinks
+          sudo rm -f /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib
+          sudo rm -f /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib.blacklist
+          sudo rm -f /usr/local/bin/macwmfx
+
+          # Create new symlinks
+          sudo ln -sf $1/usr/local/bin/ammonia/tweaks/libmacwmfx.dylib /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib
+          sudo ln -sf $1/usr/local/bin/ammonia/tweaks/libmacwmfx.dylib.blacklist /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib.blacklist
+          sudo ln -sf $1/bin/macwmfx /usr/local/bin/macwmfx
+
+          # Set permissions
+          sudo chmod 755 /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib
+          sudo chmod 644 /usr/local/bin/ammonia/tweaks/libmacwmfx.dylib.blacklist
+          sudo chmod 755 /usr/local/bin/macwmfx
+          echo "Installed macwmfx files to /usr/local/bin/ammonia/tweaks"
+        '';
       in
       {
         devShells.default = pkgs.mkShell {
@@ -112,14 +136,21 @@
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
-              -Wl,-rpath,@executable_path/../lib \
+              -Wl,-rpath,/usr/local/bin/ammonia/tweaks \
               -o build/macwmfx_cli
           '';
 
           installPhase = ''
-            mkdir -p $out/{bin,lib}
+            mkdir -p $out/bin
+            mkdir -p $out/usr/local/bin/ammonia/tweaks
             cp build/macwmfx_cli $out/bin/macwmfx
-            cp build/libmacwmfx.dylib $out/lib/
+            cp build/libmacwmfx.dylib $out/usr/local/bin/ammonia/tweaks/
+            cp ./libmacwmfx.dylib.blacklist $out/usr/local/bin/ammonia/tweaks/
+
+            # Copy install script
+            mkdir -p $out/bin
+            cp ${installScript} $out/bin/install-macwmfx
+            chmod +x $out/bin/install-macwmfx
           '';
 
           meta = with pkgs.lib; {
@@ -130,6 +161,13 @@
               "aarch64-darwin"
             ];
           };
+        };
+
+        apps.default = flake-utils.lib.mkApp {
+          drv = pkgs.writeScriptBin "install-macwmfx" ''
+            #!${pkgs.bash}/bin/bash
+            ${self.packages.${system}.macwmfx}/bin/install-macwmfx ${self.packages.${system}.macwmfx}
+          '';
         };
       }
     );
