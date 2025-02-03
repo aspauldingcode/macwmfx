@@ -41,5 +41,18 @@
    ```
    This will build macwmfx and install it to `/usr/local/bin/ammonia/tweaks`
 
+
+# Building:
+Makefile:
+```bash
+make clean; make
+```
+
+Nix:
+To build with live verbose trace, run:
+```bash
+nix build .#macwmfx -L --show-trace --verbose
+```
+
 ### Contributing:
 Feel free to modify and adapt this code for your own projects. However, please provide appropriate attribution rather than simply rebranding it. Be respectful of the open source community. If you make improvements, we welcome pull requests and contributions back to the project.
