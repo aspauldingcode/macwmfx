@@ -359,14 +359,25 @@
         NSDictionary *outlineConfig = windowConfig[@"outline"];
         if (outlineConfig) {
             gOutlineConfig.enabled = [outlineConfig[@"enabled"] boolValue];
-            if (outlineConfig[@"color"]) {
-                gOutlineConfig.activeColor = [self colorFromHexString:outlineConfig[@"color"][@"active"]];
-                gOutlineConfig.inactiveColor = [self colorFromHexString:outlineConfig[@"color"][@"inactive"]];
-                gOutlineConfig.stackedColor = [self colorFromHexString:outlineConfig[@"color"][@"stacked"]];
+            gOutlineConfig.type = [outlineConfig[@"type"] copy];
+            gOutlineConfig.width = [outlineConfig[@"width"] doubleValue];
+            gOutlineConfig.cornerRadius = [outlineConfig[@"cornerRadius"] doubleValue];
+            
+            // Parse custom color settings
+            NSDictionary *customColor = outlineConfig[@"customColor"];
+            if (customColor) {
+                gOutlineConfig.customColor.enabled = [customColor[@"enabled"] boolValue];
+                gOutlineConfig.customColor.active = [self colorFromHexString:customColor[@"active"]];
+                gOutlineConfig.customColor.inactive = [self colorFromHexString:customColor[@"inactive"]];
+                gOutlineConfig.customColor.stacked = [self colorFromHexString:customColor[@"stacked"]];
             }
-            gOutlineConfig.cornerRadius = [outlineConfig[@"cornerRadius"] doubleValue] ?: 40.0;
-            gOutlineConfig.type = [outlineConfig[@"type"] copy] ?: @"inline";
-            gOutlineConfig.width = [outlineConfig[@"width"] doubleValue] ?: 2.0;
+            
+            NSLog(@"[macwmfx] Parsed outline config: enabled=%d, type=%@, width=%.1f, cornerRadius=%.1f, customColor.enabled=%d",
+                  gOutlineConfig.enabled,
+                  gOutlineConfig.type,
+                  gOutlineConfig.width,
+                  gOutlineConfig.cornerRadius,
+                  gOutlineConfig.customColor.enabled);
         }
         
         // Window Transparency

@@ -96,12 +96,15 @@ typedef struct {
 
 typedef struct {
     BOOL enabled;
-    NSColor *activeColor;
-    NSColor *inactiveColor;
-    NSColor *stackedColor;
-    CGFloat cornerRadius;
     NSString *type;
     CGFloat width;
+    CGFloat cornerRadius;
+    struct {
+        BOOL enabled;
+        NSColor *active;
+        NSColor *inactive;
+        NSColor *stacked;
+    } customColor;
 } OutlineConfig;
 
 typedef struct {

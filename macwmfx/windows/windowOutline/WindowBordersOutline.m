@@ -1,59 +1,144 @@
-//
-//  WindowBordersOutline.m
-//  macwmfx
-//
-//  Created by Alex "aspauldingcode" on 11/13/24.
-//  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
-//
+// //
+// //  WindowBordersOutline.m
+// //  macwmfx
+// //
+// //  Created by Alex "aspauldingcode" on 11/13/24.
+// //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+// //
 
-#import "../../headers/macwmfx_globals.h"
+// #import "../../headers/macwmfx_globals.h"
+// #import <QuartzCore/QuartzCore.h>
 
-// @interface WindowBordersOutline : NSObject
+// @interface BSOutlineBorderWindow : NSPanel
+// @property (nonatomic, weak) NSWindow *targetWindow;
 // @end
 
-// @implementation WindowBordersOutline
+// @implementation BSOutlineBorderWindow
 
-// + (void)load {
-//     // Nothing needed here since we just want the swizzle
+// - (instancetype)initWithTargetWindow:(NSWindow *)window {
+//     self = [super initWithContentRect:window.frame
+//                           styleMask:NSWindowStyleMaskBorderless
+//                             backing:NSBackingStoreBuffered
+//                               defer:YES];
+//     if (self) {
+//         self.targetWindow = window;
+//         self.backgroundColor = [NSColor clearColor];
+//         self.opaque = NO;
+//         self.hasShadow = NO;
+//         self.level = NSNormalWindowLevel - 1;
+//         self.ignoresMouseEvents = YES;
+        
+//         NSView *contentView = self.contentView;
+//         contentView.wantsLayer = YES;
+//         contentView.layer = [CALayer layer];
+//     }
+//     return self;
+// }
+
+// - (void)updateBorderFrame {
+//     if (!self.targetWindow) return;
+    
+//     NSRect targetFrame = self.targetWindow.frame;
+//     CGFloat borderWidth = MIN(MAX(gOutlineConfig.width, 1), 10);
+//     NSRect borderFrame = NSInsetRect(targetFrame, -borderWidth, -borderWidth);
+    
+//     [self setFrame:borderFrame display:YES];
+    
+//     CALayer *borderLayer = self.contentView.layer;
+//     borderLayer.frame = self.contentView.bounds;
+//     borderLayer.borderWidth = borderWidth;
+//     borderLayer.cornerRadius = MIN(gOutlineConfig.cornerRadius, 40);
+    
+//     NSColor *borderColor = self.targetWindow.isKeyWindow ?
+//         [NSColor colorWithDeviceWhite:0.0 alpha:0.3] :
+//         [NSColor colorWithDeviceWhite:0.5 alpha:0.3];
+        
+//     if (gOutlineConfig.customColor.enabled) {
+//         borderColor = self.targetWindow.isKeyWindow ? 
+//             gOutlineConfig.customColor.active : 
+//             gOutlineConfig.customColor.inactive;
+//     }
+    
+//     borderLayer.borderColor = borderColor.CGColor;
 // }
 
 // @end
 
 // ZKSwizzleInterface(BS_NSWindow_BordersOutline, NSWindow, NSWindow)
 
-// @implementation BS_NSWindow_BordersOutline
+// @implementation BS_NSWindow_BordersOutline {
+//     BSOutlineBorderWindow * __weak _borderWindow;
+// }
+
+// + (void)initialize {
+//     if (self == [BS_NSWindow_BordersOutline class]) {
+//         NSLog(@"[macwmfx] Window outline controller initialized");
+//     }
+// }
+
+// - (void)updateBorder {
+//     @try {
+//         // Skip if disabled or wrong type
+//         if (!gOutlineConfig.enabled || 
+//             ![gOutlineConfig.type isEqualToString:@"outline"]) {
+//             [self clearBorder];
+//             return;
+//         }
+
+//         // Skip non-standard windows
+//         if (![self isKindOfClass:[NSWindow class]] ||
+//             [self isKindOfClass:[NSPanel class]] ||
+//             !(self.styleMask & NSWindowStyleMaskTitled) ||
+//             (self.styleMask & NSWindowStyleMaskFullScreen)) {
+//             [self clearBorder];
+//             return;
+//         }
+
+//         if (!_borderWindow) {
+//             _borderWindow = [[BSOutlineBorderWindow alloc] initWithTargetWindow:self];
+//         }
+        
+//         [_borderWindow updateBorderFrame];
+//         [_borderWindow orderFront:nil];
+//     } @catch (NSException *e) {
+//         NSLog(@"[macwmfx] Error updating outline border: %@", e);
+//         [self clearBorder];
+//     }
+// }
+
+// - (void)clearBorder {
+//     if (_borderWindow) {
+//         [_borderWindow orderOut:nil];
+//         _borderWindow = nil;
+//     }
+// }
 
 // - (void)makeKeyAndOrderFront:(id)sender {
 //     ZKOrig(void, sender);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
-    
-//     NSWindow *window = (NSWindow *)self;
-//     NSView *frameView = [window.contentView superview];
-//     if (!frameView) return;
-    
-//     frameView.wantsLayer = YES;
-//     frameView.layer.borderWidth = gOutlineWidth;
-//     frameView.layer.cornerRadius = gOutlineCornerRadius;
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
+//     [self updateBorder];
 // }
 
 // - (void)becomeKeyWindow {
 //     ZKOrig(void);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
-    
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineActiveColor.CGColor;
+//     [self updateBorder];
 // }
 
 // - (void)resignKeyWindow {
 //     ZKOrig(void);
-    
-//     if (!gOutlineEnabled || ![gOutlineType isEqualToString:@"outline"]) return;
-    
-//     NSView *frameView = [self.contentView superview];
-//     frameView.layer.borderColor = gOutlineInactiveColor.CGColor;
+//     [self updateBorder];
+// }
+
+// - (void)close {
+//     [self clearBorder];
+//     ZKOrig(void);
+// }
+
+// - (void)windowDidEnterFullScreen:(NSNotification *)notification {
+//     [self clearBorder];
+// }
+
+// - (void)windowDidExitFullScreen:(NSNotification *)notification {
+//     [self updateBorder];
 // }
 
 // @end
