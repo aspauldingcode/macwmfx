@@ -22,6 +22,11 @@ ZKSwizzleInterface(BS_NSWindow_CustomTitle, NSWindow, NSWindow)
 }
 
 + (void)handleConfigChange:(NSNotification *)notification {
+    // Only update titles if custom titles are enabled
+    if (!gCustomTitleConfig.enabled) {
+        return;
+    }
+
     dispatch_async(dispatch_get_main_queue(), ^{
         // Update all window titles
         for (NSWindow *window in [NSApp windows]) {
@@ -86,7 +91,7 @@ ZKSwizzleInterface(BS_NSWindow_CustomTitle, NSWindow, NSWindow)
         
         NSString *finalTitle = title;
         
-        // Check custom title configuration independently of titlebar settings
+        // Only modify title if custom titles are enabled
         if (gCustomTitleConfig.enabled && gCustomTitleConfig.title) {
             finalTitle = @(gCustomTitleConfig.title);
             NSLog(@"[macwmfx] Applying custom title: %@", finalTitle);
@@ -113,7 +118,7 @@ ZKSwizzleInterface(BS_NSWindow_CustomTitle, NSWindow, NSWindow)
         
         NSString *finalTitle = filename;
         
-        // Check custom title configuration independently of titlebar settings
+        // Only modify title if custom titles are enabled
         if (gCustomTitleConfig.enabled && gCustomTitleConfig.title) {
             finalTitle = @(gCustomTitleConfig.title);
             NSLog(@"[macwmfx] Applying custom title: %@", finalTitle);
