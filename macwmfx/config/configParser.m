@@ -285,9 +285,19 @@
             NSDictionary *customTitleConfig = titlebarConfig[@"customTitle"];
             if (customTitleConfig) {
                 gCustomTitleConfig.enabled = [customTitleConfig[@"enabled"] boolValue];
-                if (customTitleConfig[@"title"]) {
-                    NSString *title = customTitleConfig[@"title"];
-                    gCustomTitleConfig.title = [title UTF8String];
+                NSString *titleStr = [customTitleConfig[@"title"] description];
+                if (titleStr) {
+                    // Free existing title if necessary
+                    if (gCustomTitleConfig.title != NULL) {
+                        free((void*)gCustomTitleConfig.title);
+                        gCustomTitleConfig.title = NULL;
+                    }
+                    // Allocate and copy the new title string
+                    const char *utf8Title = [titleStr UTF8String];
+                    if (utf8Title) {
+                        gCustomTitleConfig.title = strdup(utf8Title);
+                        NSLog(@"[macwmfx] Set custom title to: %s", gCustomTitleConfig.title);
+                    }
                 }
             }
         }

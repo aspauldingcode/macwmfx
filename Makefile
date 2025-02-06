@@ -35,7 +35,8 @@ DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
     $(wildcard $(SOURCE_DIR)/menubar/*.m) \
     $(wildcard $(SOURCE_DIR)/spaces/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/*/*.m))
+    $(wildcard $(SOURCE_DIR)/windows/*/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowAnimations/*.m))
 
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 
