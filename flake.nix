@@ -17,10 +17,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         sdkRoot = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
-        # Use system's Clang directly
-        # cc = "/usr/bin/clang";
 
-        # Installation script to symlink files to /usr/local/bin/ammonia/tweaks
         installScript = pkgs.writeScript "install-macwmfx" ''
           #!${pkgs.bash}/bin/bash
           set -ex  # Add error detection and command printing
@@ -65,6 +62,8 @@
             darwin.apple_sdk.frameworks.AppKit
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
+            darwin.apple_sdk.frameworks.SkyLight
+            pkgs.swift
           ];
         };
 
@@ -79,6 +78,8 @@
             darwin.apple_sdk.frameworks.AppKit
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
+            darwin.apple_sdk.frameworks.SkyLight
+            pkgs.swift
           ];
 
           preConfigure = ''
@@ -115,6 +116,91 @@
                 -Iheaders \
                 -Iconfig \
                 -IZKSwizzle \
+                -ISymRez \
+                -c "$src" \
+                -o "$obj"
+            done
+
+            # Compile all .mm files
+            find . -type f -name "*.mm" ! -path "./.ccls-cache/*" | while read -r src; do
+              obj="build/macwmfx/''${src#./}"
+              obj="''${obj%.mm}.o"
+              mkdir -p "$(dirname "$obj")"
+              ''${CXX} \
+                -fmodules \
+                -fobjc-arc \
+                -Wall \
+                -Wextra \
+                -O2 \
+                -arch x86_64 -arch arm64 -arch arm64e \
+                -isysroot ${sdkRoot} \
+                -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
+                -I${sdkRoot}/System/Library/Frameworks/Foundation.framework/Headers \
+                -iframework ${sdkRoot}/System/Library/Frameworks \
+                -F${sdkRoot}/System/Library/Frameworks \
+                -F/System/Library/PrivateFrameworks \
+                -Iheaders \
+                -Iconfig \
+                -IZKSwizzle \
+                -ISymRez \
+                -c "$src" \
+                -o "$obj"
+            done
+
+            # Compile all .c files
+            find . -type f -name "*.c" ! -path "./.ccls-cache/*" | while read -r src; do
+              obj="build/macwmfx/''${src#./}"
+              obj="''${obj%.c}.o"
+              mkdir -p "$(dirname "$obj")"
+              ''${CC} \
+                -Wall \
+                -Wextra \
+                -O2 \
+                -arch x86_64 -arch arm64 -arch arm64e \
+                -isysroot ${sdkRoot} \
+                -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
+                -I${sdkRoot}/System/Library/Frameworks/Foundation.framework/Headers \
+                -iframework ${sdkRoot}/System/Library/Frameworks \
+                -F${sdkRoot}/System/Library/Frameworks \
+                -F/System/Library/PrivateFrameworks \
+                -Iheaders \
+                -Iconfig \
+                -IZKSwizzle \
+                -ISymRez \
+                -c "$src" \
+                -o "$obj"
+            done
+
+            # Compile all .cpp files
+            find . -type f -name "*.cpp" ! -path "./.ccls-cache/*" | while read -r src; do
+              obj="build/macwmfx/''${src#./}"
+              obj="''${obj%.cpp}.o"
+              mkdir -p "$(dirname "$obj")"
+              ''${CXX} \
+                -Wall \
+                -Wextra \
+                -O2 \
+                -arch x86_64 -arch arm64 -arch arm64e \
+                -isysroot ${sdkRoot} \
+                -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
+                -I${sdkRoot}/System/Library/Frameworks/Foundation.framework/Headers \
+                -iframework ${sdkRoot}/System/Library/Frameworks \
+                -F${sdkRoot}/System/Library/Frameworks \
+                -F/System/Library/PrivateFrameworks \
+                -Iheaders \
+                -Iconfig \
+                -ISymRez \
+                -c "$src" \
+                -o "$obj"
+            done
+
+            # Compile all .swift files except Package.swift
+            find . -type f -name "*.swift" ! -name "Package.swift" ! -path "./.ccls-cache/*" | while read -r src; do
+              obj="build/macwmfx/''${src#./}"
+              obj="''${obj%.swift}.o"
+              mkdir -p "$(dirname "$obj")"
+              swiftc \
+                -I./SymRez \
                 -c "$src" \
                 -o "$obj"
             done
@@ -132,6 +218,8 @@
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
+              -framework SkyLight \
+              -F/System/Library/PrivateFrameworks \
               -o build/libmacwmfx.dylib
 
             # Build CLI tool
@@ -151,6 +239,7 @@
               -Iheaders \
               -Iconfig \
               -IZKSwizzle \
+              -ISymRez \
               ./macwmfx/CLITool.m \
               build/libmacwmfx.dylib \
               -framework Foundation \
@@ -158,6 +247,7 @@
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
+              -framework SkyLight \
               -Wl,-rpath,/usr/local/bin/ammonia/tweaks \
               -o build/macwmfx_cli
           '';

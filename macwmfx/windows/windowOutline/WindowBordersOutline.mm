@@ -9,6 +9,15 @@
 // #import "../../headers/macwmfx_globals.h"
 // #import <QuartzCore/QuartzCore.h>
 
+// Hey I couldn't figure this out. How did you do this?
+// — Today at 1:58 PM
+// C++ hook
+// — Today at 1:58 PM
+// OH
+// — Today at 2:02 PM
+// force the inactive shadow, hook the data function for the shadow and bam 
+
+
 // @interface BSOutlineBorderWindow : NSPanel
 // @property (nonatomic, weak) NSWindow *targetWindow;
 // @end

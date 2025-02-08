@@ -266,17 +266,22 @@
             gTitlebarConfig.enabled = [titlebarConfig[@"enabled"] boolValue];
             gTitlebarConfig.forceClassic = [titlebarConfig[@"forceClassic"] boolValue];
             
-            // Parse aesthetics
-            NSDictionary *aestheticsConfig = titlebarConfig[@"aesthetics"];
-            if (aestheticsConfig) {
-                gTitlebarConfig.aesthetics.enabled = [aestheticsConfig[@"enabled"] boolValue];
-                gTitlebarConfig.aesthetics.activeColor = [self colorFromHexString:aestheticsConfig[@"activeColor"]];
-                gTitlebarConfig.aesthetics.inactiveColor = [self colorFromHexString:aestheticsConfig[@"inactiveColor"]];
-            }
-            
-            if (titlebarConfig[@"color"]) {
-                gTitlebarConfig.backgroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"background"]];
-                gTitlebarConfig.foregroundColor = [self colorFromHexString:titlebarConfig[@"color"][@"foreground"]];
+            // Parse custom color settings using active and inactive state colors
+            NSDictionary *customColor = titlebarConfig[@"customColor"];
+            if (customColor) {
+                gTitlebarConfig.customColor.enabled = [customColor[@"enabled"] boolValue];
+                if (customColor[@"activeBackground"]) {
+                    gTitlebarConfig.customColor.activeBackground = [self colorFromHexString:customColor[@"activeBackground"]];
+                }
+                if (customColor[@"activeForeground"]) {
+                    gTitlebarConfig.customColor.activeForeground = [self colorFromHexString:customColor[@"activeForeground"]];
+                }
+                if (customColor[@"inactiveBackground"]) {
+                    gTitlebarConfig.customColor.inactiveBackground = [self colorFromHexString:customColor[@"inactiveBackground"]];
+                }
+                if (customColor[@"inactiveForeground"]) {
+                    gTitlebarConfig.customColor.inactiveForeground = [self colorFromHexString:customColor[@"inactiveForeground"]];
+                }
             }
             gTitlebarConfig.style = [titlebarConfig[@"style"] copy] ?: @"modern";
             gTitlebarConfig.size = [titlebarConfig[@"size"] doubleValue] ?: 22.0;

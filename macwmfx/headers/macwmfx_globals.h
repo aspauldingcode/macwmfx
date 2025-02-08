@@ -45,12 +45,19 @@ typedef struct {
 
 typedef struct {
     BOOL enabled;
+    NSColor *activeBackground;    // For active window
+    NSColor *activeForeground;    // For active window
+    NSColor *inactiveBackground;  // For inactive window
+    NSColor *inactiveForeground;  // For inactive window
+} TitlebarCustomColor;
+
+typedef struct {
+    BOOL enabled;
     BOOL forceClassic;
     TitlebarAesthetics aesthetics;
-    NSColor *backgroundColor;
-    NSColor *foregroundColor;
     NSString *style;
     CGFloat size;
+    TitlebarCustomColor customColor;
 } TitlebarConfig;
 
 typedef struct {

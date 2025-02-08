@@ -29,8 +29,10 @@
             },
             "customColor": {
                 "enabled": false,
-                "background": "32302f",
-                "foreground": "fbf1c7"
+                "activeBackground": "32302f",
+                "activeForeground": "fbf1c7",
+                "inactiveBackground": "32302f",
+                "inactiveForeground": "fbf1c7"
             },
             "style": "modern",
             "size": 22
@@ -66,7 +68,8 @@
             "enabled": true,
             "customColor": {
                 "enabled": false,
-                "color": "32302f"
+                "active": "32302f",
+                "inactive": "00302f"
             }
         },
         "sizeConstraints": {
