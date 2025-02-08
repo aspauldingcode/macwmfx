@@ -39,10 +39,10 @@ DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
     $(wildcard $(SOURCE_DIR)/windows/windowAnimations/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm) \
     $(wildcard $(SOURCE_DIR)/windows/windowTitlebar/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/*mm) \
-    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm) \
-    $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.mm))
+    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm))
 
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 

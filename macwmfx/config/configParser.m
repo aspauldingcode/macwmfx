@@ -358,10 +358,18 @@
         if (shadowConfig) {
             BOOL oldEnabled = gShadowConfig.enabled;
             gShadowConfig.enabled = [shadowConfig[@"enabled"] boolValue];
+            
+            // Parse custom color settings
+            NSDictionary *customColor = shadowConfig[@"customColor"];
+            if (customColor) {
+                gShadowConfig.customColor.enabled = [customColor[@"enabled"] boolValue];
+                gShadowConfig.customColor.active = [customColor[@"active"] copy];
+                gShadowConfig.customColor.inactive = [customColor[@"inactive"] copy];
+            }
+            
             if (oldEnabled != gShadowConfig.enabled) {
                 NSLog(@"[macwmfx] Shadow config changed from %d to %d", oldEnabled, gShadowConfig.enabled);
             }
-            gShadowConfig.color = [self colorFromHexString:shadowConfig[@"color"]];
         }
         
         // Window Size Constraints

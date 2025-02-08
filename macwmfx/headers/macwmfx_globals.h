@@ -94,7 +94,11 @@ typedef struct {
 
 typedef struct {
     BOOL enabled;
-    NSColor *color;
+    struct {
+        BOOL enabled;
+        NSString *active;
+        NSString *inactive;
+    } customColor;
 } ShadowConfig;
 
 typedef struct {
@@ -171,6 +175,9 @@ extern BOOL gRunningFromCLI;
 - (void)loadConfig;
 - (NSColor *)colorFromHexString:(NSString *)hexString;
 @end
+
+extern bool WindowDecorations;
+extern bool WindowHideShadow;
 
 #ifdef __cplusplus
 }

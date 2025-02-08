@@ -55,7 +55,6 @@ sandboxd
 corebrightnessd
 AirPlayXPCHelper
 com.apple.cmio.registerassistantservice
-WindowServer
 cfprefsd
 tccd
 aslmanager
@@ -177,7 +176,6 @@ CoreServicesUIAgent
 universalaccessd
 com.apple.sbd
 cloudd
-WindowManager
 usernotificationsd
 accountsd
 pboard
@@ -191,4 +189,3 @@ routined
 ContextStoreAgent
 com.apple.hiservices-xpcservice
 talagent
-WindowServer

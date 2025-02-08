@@ -79,6 +79,9 @@
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
             darwin.apple_sdk.frameworks.SkyLight
+            darwin.apple_sdk.frameworks.CoreImage
+            darwin.apple_sdk.libs.xpc
+            darwin.libobjc
             pkgs.swift
           ];
 
@@ -86,6 +89,8 @@
             # Override the default CC/CXX to use Xcode's clang directly.
             export CC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
             export CXX="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            export CXXFLAGS="-stdlib=libc++"
+            export LDFLAGS="-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib"
 
             # Clear any extra flags inserted by the Nix clang wrapper.
             export NIX_CC_WRAPPER_FLAGS=""
@@ -206,7 +211,7 @@
             done
 
             # Link dynamic library
-            ''${CC} \
+            ''${CXX} \
               -dynamiclib \
               -arch x86_64 -arch arm64 -arch arm64e \
               -install_name "@rpath/libmacwmfx.dylib" \
@@ -218,8 +223,12 @@
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
+              -framework CoreImage \
               -framework SkyLight \
               -F/System/Library/PrivateFrameworks \
+              -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -L${sdkRoot}/usr/lib \
+              -stdlib=libc++ \
               -o build/libmacwmfx.dylib
 
             # Build CLI tool
