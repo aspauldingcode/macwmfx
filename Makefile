@@ -44,17 +44,26 @@ SOURCE_DIR = macwmfx
 # Update source file collection to avoid duplicates
 DYLIB_SOURCES = $(sort \
     $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c, \
+    $(SOURCE_DIR)/ZKSwizzle/ZKSwizzle.m \
     $(wildcard $(SOURCE_DIR)/*.m) \
     $(wildcard $(SOURCE_DIR)/config/*.m) \
     $(wildcard $(SOURCE_DIR)/dock/*.m) \
     $(wildcard $(SOURCE_DIR)/menubar/*.m) \
     $(wildcard $(SOURCE_DIR)/spaces/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowAnimations/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowBehavior/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowBlur/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowMaskShapes/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowSizeContraints/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/windowTitlebar/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m)))
+    $(wildcard $(SOURCE_DIR)/windows/windowTrafficLights/*.m) \
+    $(wildcard $(SOURCE_DIR)/windows/windowTransparency/*.m)))
 
 # Collect MM files separately
 MM_SOURCES = $(sort \
+    $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.mm) \
     $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm))
 
 # Update object files to include both .m and .mm sources
@@ -108,10 +117,17 @@ $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)/dock
 	@mkdir -p $(BUILD_DIR)/menubar
 	@mkdir -p $(BUILD_DIR)/spaces
-	@mkdir -p $(BUILD_DIR)/windows
-	@mkdir -p $(BUILD_DIR)/windows/windowTrafficLights
-	@mkdir -p $(BUILD_DIR)/windows/windowTitlebar
+	@mkdir -p $(BUILD_DIR)/windows/windowAnimations
+	@mkdir -p $(BUILD_DIR)/windows/windowBehavior
+	@mkdir -p $(BUILD_DIR)/windows/windowBlur
+	@mkdir -p $(BUILD_DIR)/windows/windowMaskShapes
+	@mkdir -p $(BUILD_DIR)/windows/windowOutline
 	@mkdir -p $(BUILD_DIR)/windows/windowShadow
+	@mkdir -p $(BUILD_DIR)/windows/windowSizeContraints
+	@mkdir -p $(BUILD_DIR)/windows/windowTitlebar
+	@mkdir -p $(BUILD_DIR)/windows/windowTrafficLights
+	@mkdir -p $(BUILD_DIR)/windows/windowTransparency
+	@mkdir -p $(BUILD_DIR)/SymRez
 
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)

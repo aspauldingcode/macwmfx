@@ -6,7 +6,7 @@
 //  Copyright © 2020 Jeremy Legendre. All rights reserved.
 //
 
-#include "../headers/symrez.h"
+#include "SymRez.h"
 #include <stdlib.h>
 #include <mach-o/dyld.h>
 #include <mach-o/dyld_images.h>

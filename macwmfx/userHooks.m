@@ -27,7 +27,7 @@
 #include <AppKit/AppKit.h>
 #include <QuartzCore/QuartzCore.h>
 
-#include "headers/SymRez.h"
+#include "SymRez/SymRez.h"
 // #include "heights.h"
 // #include "frida-gum.h"
 
