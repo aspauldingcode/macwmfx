@@ -53,20 +53,20 @@
                                             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
     
     // Set up event handler
-    __weak typeof(self) weakSelf = self;
+    ConfigParser *blockSelf = self;
     dispatch_source_set_event_handler(self.fileMonitor, ^{
-        unsigned long flags = dispatch_source_get_data(weakSelf.fileMonitor);
+        unsigned long flags = dispatch_source_get_data(blockSelf.fileMonitor);
         
         // Add a small delay to ensure file is fully written
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND)) {
                 NSLog(@"[macwmfx] Config file changed, reloading...");
-                [weakSelf loadConfig];
-                [weakSelf notifyConfigChanged];
+                [blockSelf loadConfig];
+                [blockSelf notifyConfigChanged];
                 
                 // If file was deleted, restart monitor
                 if (flags & DISPATCH_VNODE_DELETE) {
-                    [weakSelf startFileMonitor];
+                    [blockSelf startFileMonitor];
                 }
             }
         });

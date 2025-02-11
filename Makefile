@@ -1,21 +1,33 @@
-# Add this near the top, before CFLAGS
+# Dynamic compiler detection
+XCODE_PATH := $(shell xcode-select -p)
+XCODE_TOOLCHAIN := $(XCODE_PATH)/Toolchains/XcodeDefault.xctoolchain
+CC := $(shell xcrun -find clang)
+CXX := $(shell xcrun -find clang++)
+
+# SDK paths (already dynamic, but grouped here for clarity)
 SDKROOT ?= $(shell xcrun --show-sdk-path)
 ISYSROOT := $(shell xcrun -sdk macosx --show-sdk-path)
 INCLUDE_PATH := $(shell xcrun -sdk macosx --show-sdk-platform-path)/Developer/SDKs/MacOSX.sdk/usr/include
 
 # Compiler and flags
-CC = gcc
-CFLAGS = -fobjc-arc -Wall -Wextra -O2 \
+CFLAGS = -Wall -Wextra -O2 \
+    -fobjc-arc \
     -I$(SOURCE_DIR) \
     -I$(SOURCE_DIR)/ZKSwizzle \
     -I$(SOURCE_DIR)/headers \
     -I$(SOURCE_DIR)/config \
+    -I$(SOURCE_DIR)/SymRez \
     -isysroot $(SDKROOT) \
     -iframework $(SDKROOT)/System/Library/Frameworks \
-    -I/nix/store/*/gcc-*/lib/gcc/*/include
+    -F/System/Library/PrivateFrameworks
+
+# Add C++ specific flags
+CXXFLAGS = $(CFLAGS) -stdlib=libc++ \
+    -I$(SDKROOT)/usr/include/c++/v1 \
+    -I$(SDKROOT)/usr/include \
+    -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1
 
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
-FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -F/System/Library/PrivateFrameworks -framework SkyLight
 
 # Project name and paths
 PROJECT = macwmfx
@@ -26,8 +38,9 @@ INSTALL_DIR = /usr/local/bin/ammonia/tweaks
 CLI_INSTALL_DIR = /usr/local/bin
 SOURCE_DIR = macwmfx
 
-# Source files for dylib
-DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
+# Update source file collection to avoid duplicates
+DYLIB_SOURCES = $(sort \
+    $(filter-out $(SOURCE_DIR)/CLITool.m, \
     $(wildcard $(SOURCE_DIR)/*.m) \
     $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) \
     $(wildcard $(SOURCE_DIR)/config/*.m) \
@@ -35,16 +48,17 @@ DYLIB_SOURCES = $(filter-out $(SOURCE_DIR)/CLITool.m, \
     $(wildcard $(SOURCE_DIR)/menubar/*.m) \
     $(wildcard $(SOURCE_DIR)/spaces/*.m) \
     $(wildcard $(SOURCE_DIR)/windows/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/*/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/windowAnimations/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm) \
     $(wildcard $(SOURCE_DIR)/windows/windowTitlebar/*.m) \
-    $(wildcard $(SOURCE_DIR)/windows/*mm) \
+    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m)))
+
+# Collect MM files separately
+MM_SOURCES = $(sort \
     $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm))
 
-DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
+# Update object files to include both .m and .mm sources
+DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o) \
+    $(MM_SOURCES:$(SOURCE_DIR)/%.mm=$(BUILD_DIR)/%.o) \
+    $(SWIFT_OBJECTS)
 
 # CLI tool source and object
 CLI_SOURCE = $(SOURCE_DIR)/CLITool.m
@@ -62,6 +76,23 @@ DYLIB_FLAGS = -dynamiclib \
               -compatibility_version 1.0.0 \
               -current_version 1.0.0 \
               -fvisibility=default
+
+# Add Swift compiler
+SWIFTC = swiftc
+
+# Add Swift sources (excluding Package.swift)
+SWIFT_SOURCES = $(filter-out Package.swift, $(wildcard $(SOURCE_DIR)/*.swift))
+SWIFT_OBJECTS = $(SWIFT_SOURCES:$(SOURCE_DIR)/%.swift=$(BUILD_DIR)/%.o)
+
+# Update framework paths to use dynamic SDK root
+FRAMEWORK_PATH = $(SDKROOT)/System/Library/Frameworks
+PRIVATE_FRAMEWORK_PATH = $(SDKROOT)/System/Library/PrivateFrameworks
+
+# Split frameworks into public and private, adding IOKit and IOSurface
+PUBLIC_FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -framework Cocoa \
+    -framework CoreFoundation -framework CoreImage -framework IOKit -framework IOSurface
+
+PRIVATE_FRAMEWORKS = -framework SkyLight
 
 # Default target
 all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
@@ -82,13 +113,60 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
 
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.mm | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(ARCHS) -fmodules -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(ARCHS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
+
+# Add Swift compilation rule
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.swift | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(SWIFTC) -I./SymRez -c $< -o $@
+
 # Link dylib
 $(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
-	$(CC) -v $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ $(FRAMEWORKS)
+	$(CXX) $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ \
+	-F$(FRAMEWORK_PATH) \
+	-F$(PRIVATE_FRAMEWORK_PATH) \
+	-F/System/Library/PrivateFrameworks \
+	$(PUBLIC_FRAMEWORKS) \
+	$(PRIVATE_FRAMEWORKS) \
+	-L$(SDKROOT)/usr/lib \
+	-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+	-L/usr/lib \
+	-stdlib=libc++
 
 # Build CLI tool
 $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
-	$(CC) $(CFLAGS) $(ARCHS) $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) -o $@ $(FRAMEWORKS) -Wl,-rpath,$(INSTALL_DIR) -fvisibility=default
+	$(CC) $(CFLAGS) $(ARCHS) \
+	-fmodules \
+	-I$(SOURCE_DIR)/SymRez \
+	-isysroot $(SDKROOT) \
+	-I$(SDKROOT)/System/Library/Frameworks/AppKit.framework/Headers \
+	-I$(SDKROOT)/System/Library/Frameworks/Foundation.framework/Headers \
+	-iframework $(SDKROOT)/System/Library/Frameworks \
+	-F$(FRAMEWORK_PATH) \
+	-F$(PRIVATE_FRAMEWORK_PATH) \
+	-F/System/Library/PrivateFrameworks \
+	$(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) \
+	$(PUBLIC_FRAMEWORKS) \
+	$(PRIVATE_FRAMEWORKS) \
+	-framework Foundation \
+	-framework AppKit \
+	-framework QuartzCore \
+	-framework Cocoa \
+	-framework CoreFoundation \
+	-framework SkyLight \
+	-Wl,-rpath,$(INSTALL_DIR) \
+	-fvisibility=default \
+	-o $@
 
 # Install the dylib, CLI tool, and blacklist
 install: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)

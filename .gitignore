@@ -4,3 +4,6 @@ build/
 # Nix build outputs
 result*
 .direnv/
+
+# C/C++ Language Server Cache
+.ccls-cache/

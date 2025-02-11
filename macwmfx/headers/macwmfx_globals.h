@@ -179,6 +179,9 @@ extern BOOL gRunningFromCLI;
 extern bool WindowDecorations;
 extern bool WindowHideShadow;
 
+// Global configuration for menubar height
+extern int __height;
+
 #ifdef __cplusplus
 }
 #endif

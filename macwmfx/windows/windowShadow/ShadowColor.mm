@@ -3,161 +3,159 @@
 // //  macwmfx
 // //
 // //  Created by Alex "aspauldingcode" on 11/13/24.
-// //  Copyright (c) 2024 Alex "aspauldingcode". All rights reserved.
+// //  Copyright (c) 2025 Alex "aspauldingcode". All rights reserved.
 // //
 
-#import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
-#import <CoreGraphics/CoreGraphics.h>
-#import <CoreImage/CoreImage.h>
-#include "../../headers/macwmfx_globals.h"
-#include <objc/runtime.h>
-#include <dlfcn.h>
+// #import <Foundation/Foundation.h>
+// #import <AppKit/AppKit.h>
+// #import <CoreGraphics/CoreGraphics.h>
+// #import <CoreImage/CoreImage.h>
+// #include "../../headers/macwmfx_globals.h"
+// #include <objc/runtime.h>
+// #include <dlfcn.h>
+// #include <setjmp.h>
+// #include <signal.h>
 
-// Global shadow config
-extern ShadowConfig gShadowConfig;
-CFDictionaryRef (*OriginalShadowDataFunc)(int windowID);
+// // Global shadow config
+// extern ShadowConfig gShadowConfig;
+// CFDictionaryRef (*OriginalShadowDataFunc)(int windowID);
 
-@interface NSColor (HexString)
-+ (NSColor *)colorWithHexString:(NSString *)hexString;
-@end
+// // Global jump buffer for signal handling
+// static sigjmp_buf jumpBuffer;
 
-@implementation NSColor (HexString)
-+ (NSColor *)colorWithHexString:(NSString *)hexString {
-    NSString *cleanString = [hexString stringByReplacingOccurrencesOfString:@"#" withString:@""];
-    if([cleanString length] == 3) {
-        cleanString = [NSString stringWithFormat:@"%@%@%@%@%@%@",
-                      [cleanString substringWithRange:NSMakeRange(0, 1)],[cleanString substringWithRange:NSMakeRange(0, 1)],
-                      [cleanString substringWithRange:NSMakeRange(1, 1)],[cleanString substringWithRange:NSMakeRange(1, 1)],
-                      [cleanString substringWithRange:NSMakeRange(2, 1)],[cleanString substringWithRange:NSMakeRange(2, 1)]];
-    }
-    unsigned int baseValue;
-    [[NSScanner scannerWithString:cleanString] scanHexInt:&baseValue];
-    
-    CGFloat red = ((baseValue >> 16) & 0xFF)/255.0f;
-    CGFloat green = ((baseValue >> 8) & 0xFF)/255.0f;
-    CGFloat blue = ((baseValue) & 0xFF)/255.0f;
-    
-    return [NSColor colorWithRed:red green:green blue:blue alpha:1.0];
-}
-@end
+// // Signal handler for dangerous operations
+// static void shadowSignalHandler(int sig) {
+//     // Jump out if a signal (e.g. SIGSEGV) occurs.
+//     siglongjmp(jumpBuffer, 1);
+// }
 
-// Helper function to create a shadow directly
-CGImageRef CreateCustomShadow(NSColor *color, CGSize size, CGFloat blur) {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(NULL,
-                                               size.width,
-                                               size.height,
-                                               8,
-                                               size.width * 4,
-                                               colorSpace,
-                                               kCGImageAlphaPremultipliedLast);
+// // Helper function to create a custom shadow
+// CGImageRef CreateCustomShadow(NSColor *color, CGSize size, CGFloat blur) {
+//     // Create a bitmap context
+//     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+//     CGContextRef context = CGBitmapContextCreate(NULL, 
+//                                                size.width, 
+//                                                size.height, 
+//                                                8, // bits per component
+//                                                size.width * 4, // bytes per row
+//                                                colorSpace,
+//                                                kCGImageAlphaPremultipliedLast);
     
-    // Create path for shadow shape
-    CGMutablePathRef path = CGPathCreateMutable();
-    CGPathAddRect(path, NULL, CGRectInset(CGRectMake(0, 0, size.width, size.height), blur * 2, blur * 2));
+//     // Set shadow color and parameters
+//     CGContextSetShadowWithColor(context, CGSizeZero, blur, [color CGColor]);
     
-    // Set shadow parameters
-    CGContextSetShadowWithColor(context, CGSizeMake(0, 0), blur, [color CGColor]);
+//     // Draw shadow
+//     CGRect rect = CGRectMake(blur, blur, size.width - 2 * blur, size.height - 2 * blur);
+//     CGContextFillRect(context, rect);
     
-    // Fill the path with shadow
-    CGContextAddPath(context, path);
-    CGContextSetFillColorWithColor(context, [color CGColor]);
-    CGContextFillPath(context);
+//     // Create image from context
+//     CGImageRef image = CGBitmapContextCreateImage(context);
     
-    // Create final image
-    CGImageRef shadowImage = CGBitmapContextCreateImage(context);
+//     // Cleanup
+//     CGContextRelease(context);
+//     CGColorSpaceRelease(colorSpace);
     
-    // Cleanup
-    CGPathRelease(path);
-    CGContextRelease(context);
-    CGColorSpaceRelease(colorSpace);
-    
-    return shadowImage;
-}
+//     return image;
+// }
 
-CFDictionaryRef CustomShadowData(int windowID) {
-    NSLog(@"[macwmfx] CustomShadowData called for window %d", windowID);
+// // Main shadow customization function (with added safety)
+// CFDictionaryRef CustomShadowData(int windowID) {
+//     // If our custom shadow is not enabled, immediately fall back.
+//     if (!gShadowConfig.enabled || !gShadowConfig.customColor.enabled) {
+//         return OriginalShadowDataFunc(windowID);
+//     }
     
-    if (!gShadowConfig.enabled || !gShadowConfig.customColor.enabled) {
-        NSLog(@"[macwmfx] Shadow customization disabled, using original");
-        return OriginalShadowDataFunc(windowID);
-    }
+//     // Set up our signal handler to catch segmentation faults.
+//     struct sigaction oldAction, newAction;
+//     newAction.sa_handler = shadowSignalHandler;
+//     sigemptyset(&newAction.sa_mask);
+//     newAction.sa_flags = 0;
+//     sigaction(SIGSEGV, &newAction, &oldAction);
+//     // (You can add extra signals such as SIGBUS if needed.)
     
-    // Get window active state
-    CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionIncludingWindow, windowID);
-    bool isActive = false;
+//     // Use sigsetjmp to mark a safe spot.
+//     if (sigsetjmp(jumpBuffer, 1) != 0) {
+//         // A signal was caught. Restore the original handler then safely fall back.
+//         NSLog(@"[macwmfx] Signal caught during custom shadow creation, falling back");
+//         sigaction(SIGSEGV, &oldAction, NULL);
+//         return OriginalShadowDataFunc(windowID);
+//     }
     
-    if (windowList) {
-        if (CFArrayGetCount(windowList) > 0) {
-            CFDictionaryRef windowInfo = (CFDictionaryRef)CFArrayGetValueAtIndex(windowList, 0);
-            CFNumberRef layerRef = (CFNumberRef)CFDictionaryGetValue(windowInfo, kCGWindowLayer);
-            if (layerRef) {
-                int layer;
-                CFNumberGetValue(layerRef, kCFNumberIntType, &layer);
-                isActive = (layer == 0);
-            }
-        }
-        CFRelease(windowList);
-    }
+//     CFDictionaryRef shadowData = NULL;
+//     @try {
+//         // Convert hex string to color using ConfigParser
+//         NSColor *shadowColor = [[ConfigParser sharedInstance] colorFromHexString:gShadowConfig.customColor.active];
+//         if (!shadowColor) {
+//             NSLog(@"[macwmfx] Failed to parse shadow color, using original");
+//             shadowData = OriginalShadowDataFunc(windowID);
+//         } else {
+//             // Create shadow image
+//             CGSize shadowSize = CGSizeMake(600, 600);
+//             CGFloat blurRadius = 50.0;
+//             CGImageRef shadowImage = CreateCustomShadow(shadowColor, shadowSize, blurRadius);
+            
+//             // Create shadow properties dictionary
+//             CFMutableDictionaryRef customShadowData = CFDictionaryCreateMutable(
+//                 kCFAllocatorDefault, 0,
+//                 &kCFTypeDictionaryKeyCallBacks,
+//                 &kCFTypeDictionaryValueCallBacks);
+            
+//             // Set shadow properties
+//             CFDictionarySetValue(customShadowData, CFSTR("Image"), shadowImage);
+            
+//             // Use a default opacity since we're using NSColor directly
+//             CGFloat opacity = 0.5;
+//             CFNumberRef opacityRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &opacity);
+//             CFDictionarySetValue(customShadowData, CFSTR("Opacity"), opacityRef);
+            
+//             CGFloat offset = 30.0;
+//             CFNumberRef offsetRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &offset);
+//             CFDictionarySetValue(customShadowData, CFSTR("Offset"), offsetRef);
+            
+//             // Cleanup
+//             CGImageRelease(shadowImage);
+//             CFRelease(opacityRef);
+//             CFRelease(offsetRef);
+            
+//             shadowData = customShadowData;
+//         }
+//     }
+//     @catch (NSException *exception) {
+//         NSLog(@"[macwmfx] Exception occurred in custom shadow: %@, falling back", exception);
+//         shadowData = OriginalShadowDataFunc(windowID);
+//     }
     
-    // Create custom shadow
-    NSString *hexColor = isActive ? gShadowConfig.customColor.active : gShadowConfig.customColor.inactive;
-    NSColor *shadowColor = [NSColor colorWithHexString:hexColor];
+//     // Always restore the old signal handler.
+//     sigaction(SIGSEGV, &oldAction, NULL);
     
-    // Create custom shadow with more pronounced values
-    CGSize shadowSize = CGSizeMake(600, 600);  // Larger shadow
-    CGFloat blurRadius = isActive ? 50.0 : 30.0;  // More blur
-    CGImageRef shadowImage = CreateCustomShadow(shadowColor, shadowSize, blurRadius);
-    
-    // Create shadow dictionary with more visible values
-    CFMutableDictionaryRef shadowData = CFDictionaryCreateMutable(
-        kCFAllocatorDefault, 0,
-        &kCFTypeDictionaryKeyCallBacks,
-        &kCFTypeDictionaryValueCallBacks);
-    
-    CFDictionarySetValue(shadowData, CFSTR("Image"), shadowImage);
-    CGFloat opacity = isActive ? 0.5 : 0.3;  // Higher opacity
-    CFNumberRef opacityRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &opacity);
-    CFDictionarySetValue(shadowData, CFSTR("Opacity"), opacityRef);
-    
-    CGFloat offset = 30.0;  // Larger offset
-    CFNumberRef offsetRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &offset);
-    CFDictionarySetValue(shadowData, CFSTR("Offset"), offsetRef);
-    
-    // Cleanup
-    CGImageRelease(shadowImage);
-    CFRelease(opacityRef);
-    CFRelease(offsetRef);
-    
-    return shadowData;
-}
+//     return shadowData;
+// }
 
-void setupShadow() {
-    NSLog(@"[macwmfx] Setting up shadow hook...");
-    gShadowConfig.enabled = YES;
-    gShadowConfig.customColor.enabled = YES;
+// // Initialize shadow customization
+// void setupShadow() {
+//     NSLog(@"[macwmfx] Setting up shadow customization...");
+//     gShadowConfig.enabled = YES;
+//     gShadowConfig.customColor.enabled = YES;
     
-    // Load gum functions from ammonia
-    void *gum = dlopen("/usr/local/bin/ammonia/fridagum.dylib", RTLD_NOW | RTLD_GLOBAL);
-    if (!gum) {
-        NSLog(@"[macwmfx] Failed to load fridagum.dylib: %s", dlerror());
-        return;
-    }
+//     void *gum = dlopen("/usr/local/bin/ammonia/fridagum.dylib", RTLD_NOW | RTLD_GLOBAL);
+//     if (!gum) {
+//         NSLog(@"[macwmfx] Failed to load fridagum.dylib: %s", dlerror());
+//         return;
+//     }
     
-    // Get the function finder from gum with proper casting
-    typedef void* (*FindExportFunc)(const char*, const char*);
-    FindExportFunc find_export = (FindExportFunc)dlsym(gum, "gum_module_find_export_by_name");
-    if (!find_export) {
-        NSLog(@"[macwmfx] Failed to find gum_module_find_export_by_name");
-        return;
-    }
+//     typedef void* (*FindExportFunc)(const char*, const char*);
+//     FindExportFunc find_export = (FindExportFunc)dlsym(gum, "gum_module_find_export_by_name");
+//     if (!find_export) {
+//         NSLog(@"[macwmfx] Failed to find gum_module_find_export_by_name");
+//         return;
+//     }
     
-    // Find the shadow function
-    void *shadowFunc = find_export("SkyLight", "SLWindowServerShadowData");
-    if (shadowFunc) {
-        NSLog(@"[macwmfx] Found SLWindowServerShadowData");
-        OriginalShadowDataFunc = (CFDictionaryRef (*)(int))shadowFunc;
-        // The actual hook will be handled by ammonia
-    }
-}
+//     void *shadowFunc = find_export("SkyLight", "SLWindowServerShadowData");
+//     if (shadowFunc) {
+//         NSLog(@"[macwmfx] Found SLWindowServerShadowData");
+//         OriginalShadowDataFunc = (CFDictionaryRef (*)(int))shadowFunc;
+//         NSLog(@"[macwmfx] Shadow customization setup complete");
+//     } else {
+//         NSLog(@"[macwmfx] Failed to find SLWindowServerShadowData");
+//     }
+// }
