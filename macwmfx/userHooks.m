@@ -27,7 +27,7 @@
 #include <AppKit/AppKit.h>
 #include <QuartzCore/QuartzCore.h>
 
-#include "../headers/symrez.h"
+#include "headers/SymRez.h"
 // #include "heights.h"
 // #include "frida-gum.h"
 
@@ -35,40 +35,6 @@ CGImageRef ImageFromFile(const char *filePath)
 {
     CGDataProviderRef dataProvider = CGDataProviderCreateWithFilename(filePath);
     return CGImageCreateWithPNGDataProvider(dataProvider, NULL, NO, kCGRenderingIntentDefault);
-}
-
-#pragma mark - menubar
-
-
-void (*MenubarLayersOld)();
-void MenubarLayersNew(void *param_1, bool param_2)
-{
-    MenubarLayersOld(param_1, param_2);
-
-    if (MenubarGraphic)
-    {
-        // Fetching the class of the layer object
-        CALayer * layer_one = *(id *)((uintptr_t)param_1 + 0x10);
-        CALayer * layer_two = *(id *)((uintptr_t)param_1 + 0x18);
-
-        layer_one.contents = ImageFromFile("/Library/wsfun/menubar.png");
-        layer_two.contents = ImageFromFile("/Library/wsfun/menubar.png");
-    }
-}
-
-
-CGRect (*HeightOld)();
-CGRect HeightNew()
-{
-    CGRect orig = HeightOld();
-    orig.size.height = __height;
-    return orig;
-}
-
-void ClientRenderHeightNew(int did, int * height)
-{
-    *height = __height;
-    return;
 }
 
 #pragma mark - shadows
@@ -178,6 +144,8 @@ long ServerShadowSurfaceNew(void * shadow_ptr /* WSShadow:: */, void * param_1,v
                                                  CGColorSpaceCreateDeviceRGB(),
                                                  kCGImageAlphaPremultipliedLast);
 
+    bool WindowHideShadow = true;
+    bool WindowDecorations = true;
 
     if (WindowHideShadow) {
         CGContextClearRect(context, CGRectMake(0, 0, width, height));
@@ -217,23 +185,23 @@ bool NinePartable() {
     return true;
 }
 
-GumInterceptor *magic;
-void (*GumInterceptorReplaceFunc)(GumInterceptor * self, gpointer function_address, gpointer replacement_function, gpointer replacement_data, gpointer * original_function);
-void *(*GumModuleFindExportByNameFunc)(const gchar * module_name, const gchar * symbol_name);
-void (*GumInterceptorBeginTransactionFunc)(GumInterceptor * self);
-void (*GumInterceptorEndTransactionFunc)(GumInterceptor * self);
+void *magic;
+void (*GumInterceptorReplaceFunc)(void * self, void * function_address, void * replacement_function, void * replacement_data, void ** original_function);
+void *(*GumModuleFindExportByNameFunc)(const char * module_name, const char * symbol_name);
+void (*GumInterceptorBeginTransactionFunc)(void * self);
+void (*GumInterceptorEndTransactionFunc)(void * self);
 
 void ClientHook(void * func, void * new, void ** old)
 {
     if (func != NULL) 
     { 
         GumInterceptorBeginTransactionFunc(magic);
-        GumInterceptorReplaceFunc(magic, (gpointer)func, new, NULL, old);
+        GumInterceptorReplaceFunc(magic, (void *)func, new, NULL, old);
         GumInterceptorEndTransactionFunc(magic);
     }
 }
 
-void InstantiateClientHooks(GumInterceptor *interceptor) {
+void InstantiateClientHooks(void *interceptor) {
     // Setup hooking
     magic = interceptor;
     void *hooking = dlopen("/usr/local/bin/ammonia/fridagum.dylib", RTLD_NOW | RTLD_GLOBAL);

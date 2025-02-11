@@ -19,13 +19,16 @@ CFLAGS = -Wall -Wextra -O2 \
     -I$(SOURCE_DIR)/SymRez \
     -isysroot $(SDKROOT) \
     -iframework $(SDKROOT)/System/Library/Frameworks \
-    -F/System/Library/PrivateFrameworks
+    -F/System/Library/PrivateFrameworks \
+    -I$(SDKROOT)/usr/include \
+    -fmodules \
+    -mmacosx-version-min=13.0
 
 # Add C++ specific flags
 CXXFLAGS = $(CFLAGS) -stdlib=libc++ \
     -I$(SDKROOT)/usr/include/c++/v1 \
     -I$(SDKROOT)/usr/include \
-    -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1
+    -I$(XCODE_TOOLCHAIN)/usr/include/c++/v1
 
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
 
@@ -40,9 +43,8 @@ SOURCE_DIR = macwmfx
 
 # Update source file collection to avoid duplicates
 DYLIB_SOURCES = $(sort \
-    $(filter-out $(SOURCE_DIR)/CLITool.m, \
+    $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c, \
     $(wildcard $(SOURCE_DIR)/*.m) \
-    $(wildcard $(SOURCE_DIR)/ZKSwizzle/*.m) \
     $(wildcard $(SOURCE_DIR)/config/*.m) \
     $(wildcard $(SOURCE_DIR)/dock/*.m) \
     $(wildcard $(SOURCE_DIR)/menubar/*.m) \
@@ -58,6 +60,7 @@ MM_SOURCES = $(sort \
 # Update object files to include both .m and .mm sources
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o) \
     $(MM_SOURCES:$(SOURCE_DIR)/%.mm=$(BUILD_DIR)/%.o) \
+    $(BUILD_DIR)/SymRez/SymRez.o \
     $(SWIFT_OBJECTS)
 
 # CLI tool source and object
@@ -72,10 +75,11 @@ BLACKLIST_DEST = $(INSTALL_DIR)/libmacwmfx.dylib.blacklist
 
 # Dylib settings
 DYLIB_FLAGS = -dynamiclib \
-              -install_name @rpath/$(DYLIB_NAME) \
-              -compatibility_version 1.0.0 \
-              -current_version 1.0.0 \
-              -fvisibility=default
+    -install_name @rpath/$(DYLIB_NAME) \
+    -compatibility_version 1.0.0 \
+    -current_version 1.0.0 \
+    -fvisibility=default \
+    -mmacosx-version-min=13.0
 
 # Add Swift compiler
 SWIFTC = swiftc
@@ -100,13 +104,14 @@ all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
 # Create build directory and subdirectories
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(BUILD_DIR)/ZKSwizzle
 	@mkdir -p $(BUILD_DIR)/config
 	@mkdir -p $(BUILD_DIR)/dock
 	@mkdir -p $(BUILD_DIR)/menubar
 	@mkdir -p $(BUILD_DIR)/spaces
 	@mkdir -p $(BUILD_DIR)/windows
 	@mkdir -p $(BUILD_DIR)/windows/windowTrafficLights
+	@mkdir -p $(BUILD_DIR)/windows/windowTitlebar
+	@mkdir -p $(BUILD_DIR)/windows/windowShadow
 
 # Compile source files
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
@@ -123,7 +128,15 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
+	$(CC) -Wall -Wextra -O2 $(ARCHS) \
+	-isysroot $(SDKROOT) \
+	-I$(SDKROOT)/usr/include \
+	-I$(SOURCE_DIR) \
+	-I$(SOURCE_DIR)/headers \
+	-I$(SOURCE_DIR)/SymRez \
+	-I$(XCODE_TOOLCHAIN)/usr/include \
+	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
+	-c $< -o $@
 
 # Add Swift compilation rule
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.swift | $(BUILD_DIR)
@@ -132,16 +145,23 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.swift | $(BUILD_DIR)
 
 # Link dylib
 $(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
-	$(CXX) $(DYLIB_FLAGS) $(ARCHS) $(DYLIB_OBJECTS) -o $@ \
+	$(CC) $(DYLIB_FLAGS) $(ARCHS) \
+	-isysroot $(SDKROOT) \
+	-I$(SDKROOT)/usr/include \
+	-I$(SOURCE_DIR) \
+	-I$(SOURCE_DIR)/headers \
+	-I$(SOURCE_DIR)/SymRez \
+	-I$(XCODE_TOOLCHAIN)/usr/include \
+	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
+	$(DYLIB_OBJECTS) -o $@ \
 	-F$(FRAMEWORK_PATH) \
 	-F$(PRIVATE_FRAMEWORK_PATH) \
 	-F/System/Library/PrivateFrameworks \
 	$(PUBLIC_FRAMEWORKS) \
 	$(PRIVATE_FRAMEWORKS) \
 	-L$(SDKROOT)/usr/lib \
-	-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
-	-L/usr/lib \
-	-stdlib=libc++
+	-L$(XCODE_TOOLCHAIN)/usr/lib \
+	-L/usr/lib
 
 # Build CLI tool
 $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)

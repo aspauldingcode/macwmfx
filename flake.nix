@@ -63,9 +63,7 @@
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
             darwin.apple_sdk.frameworks.SkyLight
-            darwin.apple_sdk.frameworks.CoreImage
-            darwin.libobjc
-            swift
+            pkgs.swift
           ];
         };
 
@@ -82,19 +80,20 @@
             darwin.apple_sdk.frameworks.CoreFoundation
             darwin.apple_sdk.frameworks.SkyLight
             darwin.apple_sdk.frameworks.CoreImage
+            darwin.apple_sdk.libs.xpc
             darwin.libobjc
-            swift
+            pkgs.swift
           ];
 
           preConfigure = ''
-            # Dynamically find Xcode clang
-            export CC="$(xcrun -find clang)"
-            export CXX="$(xcrun -find clang++)"
+            # Override the default CC/CXX to use Xcode's clang directly.
+            export CC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+            export CXX="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
             export CXXFLAGS="-stdlib=libc++"
-            export LDFLAGS="-L$(dirname $(xcrun -find clang))/../lib"
+            export LDFLAGS="-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib"
 
-            # Remove the -fno-objc-arc flag to enable ARC
-            export NIX_CFLAGS_COMPILE=""
+            # Clear any extra flags inserted by the Nix clang wrapper.
+            export NIX_CC_WRAPPER_FLAGS=""
           '';
 
           buildPhase = ''
@@ -108,6 +107,7 @@
               mkdir -p "$(dirname "$obj")"
               ''${CC} \
                 -fmodules \
+                -fobjc-arc \
                 -Wall \
                 -Wextra \
                 -O2 \
@@ -133,6 +133,7 @@
               mkdir -p "$(dirname "$obj")"
               ''${CXX} \
                 -fmodules \
+                -fobjc-arc \
                 -Wall \
                 -Wextra \
                 -O2 \
@@ -209,6 +210,28 @@
                 -o "$obj"
             done
 
+            # Compile SymRez.c specifically
+            mkdir -p "build/macwmfx/macwmfx/SymRez"
+            ''${CC} \
+              -Wall \
+              -Wextra \
+              -O2 \
+              -arch x86_64 -arch arm64 -arch arm64e \
+              -isysroot ${sdkRoot} \
+              -fmodules \
+              -fmodule-map-file=./macwmfx/SymRez/module.modulemap \
+              -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
+              -I${sdkRoot}/System/Library/Frameworks/Foundation.framework/Headers \
+              -iframework ${sdkRoot}/System/Library/Frameworks \
+              -F${sdkRoot}/System/Library/Frameworks \
+              -F/System/Library/PrivateFrameworks \
+              -Iheaders \
+              -Iconfig \
+              -IZKSwizzle \
+              -ISymRez \
+              -c ./macwmfx/SymRez/SymRez.c \
+              -o build/macwmfx/macwmfx/SymRez/SymRez.o
+
             # Link dynamic library
             ''${CXX} \
               -dynamiclib \
@@ -233,6 +256,7 @@
             # Build CLI tool
             ''${CC} \
               -fmodules \
+              -fobjc-arc \
               -Wall \
               -Wextra \
               -O2 \
