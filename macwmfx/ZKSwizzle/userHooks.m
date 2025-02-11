@@ -1,3 +1,11 @@
+//
+//  userhooks.c
+//  menuheights
+//
+//  Created by knives on 2/5/24.
+//
+
+
 #include <Foundation/Foundation.h>
 #include <ImageIO/ImageIO.h>
 #include <objc/message.h>
@@ -19,89 +27,84 @@
 #include <AppKit/AppKit.h>
 #include <QuartzCore/QuartzCore.h>
 
-// Global variables
-bool WindowHideShadow = false;
-bool WindowDecorations = true;
-int __height = 50;
-bool MenubarGraphic = true;
+#include "../headers/symrez.h"
+// #include "heights.h"
+// #include "frida-gum.h"
 
-// Global variables for original function pointers
-CGRect (*HeightOld)() = NULL;
-CGError (*ServerSetHasActiveShadowOld)(long param_1, uint param_2) = NULL;
-long (*ServerShadowSurfaceOld)(void *shadow_ptr, void *param_1, void *param_2) = NULL;
-void (*MenubarLayersOld)(void *param_1, bool param_2) = NULL;
-
-// Function prototypes
-CGImageRef ImageFromFile(const char *filePath);
-void MenubarLayersNew(void *param_1, bool param_2);
-CGRect HeightNew();
-void ClientRenderHeightNew(int did, int *height);
-long ServerShadowSurfaceNew(void *shadow_ptr, void *param_1, void *param_2);
-CGError ServerSetHasActiveShadowNew(long param_1, uint param_2);
-bool WantsRenderAbove();
-bool NinePartable();
-void InstantiateClientHooks();
-void ClientHook(void *func, void *new, void **old);
-void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int insets);
-void SwapRedBlue(IOSurfaceRef surface);
-
-// Function implementations
-CGImageRef ImageFromFile(const char *filePath) {
+CGImageRef ImageFromFile(const char *filePath) 
+{
     CGDataProviderRef dataProvider = CGDataProviderCreateWithFilename(filePath);
     return CGImageCreateWithPNGDataProvider(dataProvider, NULL, NO, kCGRenderingIntentDefault);
 }
 
-void MenubarLayersNew(void *param_1, bool param_2) {
-    if (MenubarLayersOld) {
-        MenubarLayersOld(param_1, param_2);
-    }
+#pragma mark - menubar
 
-    if (MenubarGraphic) {
-        // ARC-compatible pointer casting
-        void **rawLayers = (void **)param_1;
-        CALayer *layer_one = (__bridge CALayer *)rawLayers[0x10/sizeof(void*)];
-        CALayer *layer_two = (__bridge CALayer *)rawLayers[0x18/sizeof(void*)];
 
-        layer_one.contents = (__bridge id)ImageFromFile("/Library/wsfun/menubar.png");
-        layer_two.contents = (__bridge id)ImageFromFile("/Library/wsfun/menubar.png");
-    }
-}
+void (*MenubarLayersOld)();
+void MenubarLayersNew(void *param_1, bool param_2)
+{
+    MenubarLayersOld(param_1, param_2);
 
-CGRect HeightNew() {
-    if (HeightOld) {
-        CGRect orig = HeightOld();
-        orig.size.height = __height;
-        return orig;
-    }
-    return CGRectZero;
-}
+    if (MenubarGraphic)
+    {
+        // Fetching the class of the layer object
+        CALayer * layer_one = *(id *)((uintptr_t)param_1 + 0x10);
+        CALayer * layer_two = *(id *)((uintptr_t)param_1 + 0x18);
 
-void ClientRenderHeightNew(int did, int *height) {
-    (void)did; // Mark 'did' as unused
-    if (height) {
-        *height = __height;
+        layer_one.contents = ImageFromFile("/Library/wsfun/menubar.png");
+        layer_two.contents = ImageFromFile("/Library/wsfun/menubar.png");
     }
 }
+
+
+CGRect (*HeightOld)();
+CGRect HeightNew()
+{
+    CGRect orig = HeightOld();
+    orig.size.height = __height;
+    return orig;
+}
+
+void ClientRenderHeightNew(int did, int * height)
+{
+    *height = __height;
+    return;
+}
+
+#pragma mark - shadows
 
 struct ServerShadow {
     IOSurfaceRef surface;
     // Other members...
 };
 
-void SwapRedBlue(IOSurfaceRef surface) {
-    if (!surface) {
+// to render shadow properly in correct color
+void SwapRedBlue(IOSurfaceRef surface)
+{
+    if (!surface) 
+    {
+        // Handle null surface
         return;
     }
 
+    // Get surface properties
     uint32_t width = (uint32_t)IOSurfaceGetWidth(surface);
     uint32_t height = (uint32_t)IOSurfaceGetHeight(surface);
     size_t bytesPerElement = IOSurfaceGetBytesPerElement(surface);
     size_t bytesPerRow = IOSurfaceGetBytesPerRow(surface);
+
+    // Get base address of the surface
     void *baseAddress = IOSurfaceGetBaseAddress(surface);
 
-    for (uint32_t y = 0; y < height; y++) {
-        for (uint32_t x = 0; x < width; x++) {
+    // Iterate through each pixel
+    for (uint32_t y = 0; y < height; y++) 
+    {
+        for (uint32_t x = 0; x < width; x++) 
+        {
+            // Calculate the offset for the current pixel
             size_t offset = y * bytesPerRow + x * bytesPerElement;
+            
+            // Swap red and blue channels
             uint8_t *pixel = ((uint8_t *)baseAddress) + offset;
             uint8_t temp = pixel[0];  // Store red channel temporarily
             pixel[0] = pixel[2];      // Red channel becomes blue
@@ -110,7 +113,13 @@ void SwapRedBlue(IOSurfaceRef surface) {
     }
 }
 
-void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int insets) {
+long (*ServerShadowSurfaceOld)();
+
+#include <CoreGraphics/CoreGraphics.h>
+
+// Draw a nine-slice image
+void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int insets) 
+{
     CGFloat leftInset = insets;
     CGFloat rightInset = insets;
     CGFloat topInset = insets;
@@ -147,48 +156,57 @@ void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int inse
 }
 
 CGImageRef shadow_png = NULL; 
-long ServerShadowSurfaceNew(void *shadow_ptr, void *param_1, void *param_2) {
-    if (!shadow_png) {
+long ServerShadowSurfaceNew(void * shadow_ptr /* WSShadow:: */, void * param_1,void * param_2)
+{
+    if (!shadow_png)
         shadow_png = ImageFromFile("/Library/wsfun/shadow.png");
+
+    // Create a new iOSurface
+    long k = ServerShadowSurfaceOld(shadow_ptr, param_1, param_2);
+    struct ServerShadow * shadow = (struct ServerShadow *)shadow_ptr;
+
+    IOSurfaceLock(shadow->surface, 0, NULL);
+    int width = IOSurfaceGetWidth(shadow->surface);
+    int height = IOSurfaceGetHeight(shadow->surface);
+
+    // Create a bitmap context for the surface
+    CGContextRef context = CGBitmapContextCreate(IOSurfaceGetBaseAddress(shadow->surface),
+                                                 width,
+                                                 height,
+                                                 8, // bits per component
+                                                 IOSurfaceGetBytesPerRow(shadow->surface),
+                                                 CGColorSpaceCreateDeviceRGB(),
+                                                 kCGImageAlphaPremultipliedLast);
+
+
+    if (WindowHideShadow) {
+        CGContextClearRect(context, CGRectMake(0, 0, width, height));
     }
 
-    long k = ServerShadowSurfaceOld ? ServerShadowSurfaceOld(shadow_ptr, param_1, param_2) : 0;
-    struct ServerShadow *shadow = (struct ServerShadow *)shadow_ptr;
-
-    if (shadow && shadow->surface) {
-        IOSurfaceLock(shadow->surface, 0, NULL);
-        int width = IOSurfaceGetWidth(shadow->surface);
-        int height = IOSurfaceGetHeight(shadow->surface);
-
-        CGContextRef context = CGBitmapContextCreate(IOSurfaceGetBaseAddress(shadow->surface),
-                                                     width,
-                                                     height,
-                                                     8,
-                                                     IOSurfaceGetBytesPerRow(shadow->surface),
-                                                     CGColorSpaceCreateDeviceRGB(),
-                                                     kCGImageAlphaPremultipliedLast);
-
-        if (WindowHideShadow) {
-            CGContextClearRect(context, CGRectMake(0, 0, width, height));
-        }
-
-        if (WindowDecorations) {
-            DrawNineSlice(context, shadow_png, CGRectMake(0, 0, width, height), 19);
-        }
-        
-        CGContextFlush(context);
-        CGContextRelease(context);
-
-        SwapRedBlue(shadow->surface);
-        IOSurfaceUnlock(shadow->surface, 0, 0);
+    if (WindowDecorations) {
+        DrawNineSlice(context, shadow_png, CGRectMake(0, 0, width, height), 19); // Example insets)
+        //CGContextClearRect(context, CGRectMake(0, 0, width, height)); // final clear of the REAL window rect.
     }
+    
+    CGContextFlush(context);
+    CGContextRelease(context);
+
+    SwapRedBlue(shadow->surface);
+    // Return the iOSurface
+    IOSurfaceUnlock(shadow->surface, 0, 0);
 
     return k;
 }
 
-CGError ServerSetHasActiveShadowNew(long param_1, uint param_2) {
-    (void)param_2; // Mark as unused
-    return ServerSetHasActiveShadowOld ? ServerSetHasActiveShadowOld(param_1, 0) : kCGErrorSuccess;
+
+CGError (*ServerSetHasActiveShadowOld)();
+CGError ServerSetHasActiveShadowNew(long param_1,uint param_2)
+{
+    return ServerSetHasActiveShadowOld(param_1, 0); /* 
+                                                    setting to zero disables the two states, 
+                                                    which also makes drawing easier
+                                                    as everything shadow isnt moving.
+                                                    */
 }
 
 bool WantsRenderAbove() {
@@ -199,26 +217,44 @@ bool NinePartable() {
     return true;
 }
 
-void ClientHook(void *func, void *new, void **old) {
-    if (func && new) {
-        *old = func; // Save the original function pointer
-        // Replace the original function with the new function
-        // This is platform-specific and may require additional work
+GumInterceptor *magic;
+void (*GumInterceptorReplaceFunc)(GumInterceptor * self, gpointer function_address, gpointer replacement_function, gpointer replacement_data, gpointer * original_function);
+void *(*GumModuleFindExportByNameFunc)(const gchar * module_name, const gchar * symbol_name);
+void (*GumInterceptorBeginTransactionFunc)(GumInterceptor * self);
+void (*GumInterceptorEndTransactionFunc)(GumInterceptor * self);
+
+void ClientHook(void * func, void * new, void ** old)
+{
+    if (func != NULL) 
+    { 
+        GumInterceptorBeginTransactionFunc(magic);
+        GumInterceptorReplaceFunc(magic, (gpointer)func, new, NULL, old);
+        GumInterceptorEndTransactionFunc(magic);
     }
 }
 
-void InstantiateClientHooks() {
-    // Resolve symbols and hook functions manually
-    void *skylight = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_NOW);
-    if (skylight) {
-        ClientHook(dlsym(skylight, "_WSWindowShadowWantsRenderAbove"), WantsRenderAbove, NULL);
-        ClientHook(dlsym(skylight, "__ZL28is_shadow_mask_nine_partableP9CGXWindow"), NinePartable, NULL);
-        ClientHook(dlsym(skylight, "_WSWindowSetHasActiveShadow"), ServerSetHasActiveShadowNew, (void **)&ServerSetHasActiveShadowOld);
-        ClientHook(dlsym(skylight, "__ZN8WSShadowC1EP11__IOSurface19WSShadowDescription"), ServerShadowSurfaceNew, (void **)&ServerShadowSurfaceOld);
+void InstantiateClientHooks(GumInterceptor *interceptor) {
+    // Setup hooking
+    magic = interceptor;
+    void *hooking = dlopen("/usr/local/bin/ammonia/fridagum.dylib", RTLD_NOW | RTLD_GLOBAL);
+    GumInterceptorReplaceFunc = dlsym(hooking, "gum_interceptor_replace");
+    GumModuleFindExportByNameFunc = dlsym(hooking, "gum_module_find_export_by_name");
+    GumInterceptorBeginTransactionFunc = dlsym(hooking, "gum_interceptor_begin_transaction");
+    GumInterceptorEndTransactionFunc = dlsym(hooking, "gum_interceptor_end_transaction");
+
+    symrez_t skylight = symrez_new("SkyLight");
+    
+    if (skylight != NULL) { 
+        // Hooks the shadow image, and properties
+        
+        ClientHook(sr_resolve_symbol(skylight, "_WSWindowShadowWantsRenderAbove"), WantsRenderAbove, NULL); 
+        ClientHook(sr_resolve_symbol(skylight, "__ZL28is_shadow_mask_nine_partableP9CGXWindow"), NinePartable, NULL); 
+        ClientHook(sr_resolve_symbol(skylight, "_WSWindowSetHasActiveShadow"), ServerSetHasActiveShadowNew, &ServerSetHasActiveShadowOld); 
+        ClientHook(sr_resolve_symbol(skylight, "__ZN8WSShadowC1EP11__IOSurface19WSShadowDescription"), ServerShadowSurfaceNew, &ServerShadowSurfaceOld); 
 
         // Menubar
-        // ClientHook(dlsym(skylight, "__ZL40configure_menu_bar_layers_for_backgroundP17PKGMenuBarContextb"), MenubarLayersNew, &MenubarLayersOld);
-        // ClientHook(dlsym(skylight, "__ZL25menu_bar_bounds_for_spaceP19PKGManagedMenuSpace"), HeightNew, &HeightOld);
-        // ClientHook(dlsym(skylight, "_SLSGetDisplayMenubarHeight"), ClientRenderHeightNew, NULL);
+        // ClientHook(sr_resolve_symbol(skylight, "__ZL40configure_menu_bar_layers_for_backgroundP17PKGMenuBarContextb"), MenubarLayersNew, &MenubarLayersOld); // Needs fixup on sonoma
+        // ClientHook(sr_resolve_symbol(skylight, "__ZL25menu_bar_bounds_for_spaceP19PKGManagedMenuSpace"), HeightNew, &HeightOld); 
+        // ClientHook(sr_resolve_symbol(skylight, "_SLSGetDisplayMenubarHeight"), ClientRenderHeightNew, NULL);
     }
 }
