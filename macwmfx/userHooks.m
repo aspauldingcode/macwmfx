@@ -1,5 +1,5 @@
 //
-//  userhooks.c
+//  userhooks.m
 //  menuheights
 //
 //  Created by knives on 2/5/24.
@@ -23,13 +23,7 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include <objc/objc.h>
 #include <objc/runtime.h>
-
-#include <AppKit/AppKit.h>
-#include <QuartzCore/QuartzCore.h>
-
 #include "SymRez/SymRez.h"
-// #include "heights.h"
-// #include "frida-gum.h"
 
 CGImageRef ImageFromFile(const char *filePath) 
 {
@@ -86,6 +80,8 @@ long (*ServerShadowSurfaceOld)();
 // Draw a nine-slice image
 void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int insets) 
 {
+    if (!context || !image) return;
+    
     CGFloat leftInset = insets;
     CGFloat rightInset = insets;
     CGFloat topInset = insets;
@@ -93,74 +89,93 @@ void DrawNineSlice(CGContextRef context, CGImageRef image, CGRect rect, int inse
     
     CGSize imageSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));
     
-    // Draw top left corner
-    CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y, leftInset, topInset), CGImageCreateWithImageInRect(image, CGRectMake(0, imageSize.height - topInset, leftInset, topInset)));
+    // Create all sub-images first
+    CGImageRef topLeft = CGImageCreateWithImageInRect(image, CGRectMake(0, imageSize.height - topInset, leftInset, topInset));
+    CGImageRef topEdge = CGImageCreateWithImageInRect(image, CGRectMake(leftInset, imageSize.height - topInset, imageSize.width - leftInset - rightInset, topInset));
+    CGImageRef topRight = CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, imageSize.height - topInset, rightInset, topInset));
+    CGImageRef leftEdge = CGImageCreateWithImageInRect(image, CGRectMake(0, topInset, leftInset, imageSize.height - topInset - bottomInset));
+    CGImageRef center = CGImageCreateWithImageInRect(image, CGRectMake(leftInset, topInset, imageSize.width - leftInset - rightInset, imageSize.height - topInset - bottomInset));
+    CGImageRef rightEdge = CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, topInset, rightInset, imageSize.height - topInset - bottomInset));
+    CGImageRef bottomLeft = CGImageCreateWithImageInRect(image, CGRectMake(0, 0, leftInset, bottomInset));
+    CGImageRef bottomEdge = CGImageCreateWithImageInRect(image, CGRectMake(leftInset, 0, imageSize.width - leftInset - rightInset, bottomInset));
+    CGImageRef bottomRight = CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, 0, rightInset, bottomInset));
     
-    // Draw top edge
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y, rect.size.width - leftInset - rightInset, topInset), CGImageCreateWithImageInRect(image, CGRectMake(leftInset, imageSize.height - topInset, imageSize.width - leftInset - rightInset, topInset)));
+    // Draw all pieces
+    if (topLeft) CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y, leftInset, topInset), topLeft);
+    if (topEdge) CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y, rect.size.width - leftInset - rightInset, topInset), topEdge);
+    if (topRight) CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y, rightInset, topInset), topRight);
+    if (leftEdge) CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y + topInset, leftInset, rect.size.height - topInset - bottomInset), leftEdge);
+    if (center) CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y + topInset, rect.size.width - leftInset - rightInset, rect.size.height - topInset - bottomInset), center);
+    if (rightEdge) CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y + topInset, rightInset, rect.size.height - topInset - bottomInset), rightEdge);
+    if (bottomLeft) CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y + rect.size.height - bottomInset, leftInset, bottomInset), bottomLeft);
+    if (bottomEdge) CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y + rect.size.height - bottomInset, rect.size.width - leftInset - rightInset, bottomInset), bottomEdge);
+    if (bottomRight) CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y + rect.size.height - bottomInset, rightInset, bottomInset), bottomRight);
     
-    // Draw top right corner
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y, rightInset, topInset), CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, imageSize.height - topInset, rightInset, topInset)));
-    
-    // Draw left edge
-    CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y + topInset, leftInset, rect.size.height - topInset - bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(0, topInset, leftInset, imageSize.height - topInset - bottomInset)));
-    
-    // Draw center
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y + topInset, rect.size.width - leftInset - rightInset, rect.size.height - topInset - bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(leftInset, topInset, imageSize.width - leftInset - rightInset, imageSize.height - topInset - bottomInset)));
-    
-    // Draw right edge
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y + topInset, rightInset, rect.size.height - topInset - bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, topInset, rightInset, imageSize.height - topInset - bottomInset)));
-    
-    // Draw bottom left corner
-    CGContextDrawImage(context, CGRectMake(rect.origin.x, rect.origin.y + rect.size.height - bottomInset, leftInset, bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(0, 0, leftInset, bottomInset)));
-    
-    // Draw bottom edge
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + leftInset, rect.origin.y + rect.size.height - bottomInset, rect.size.width - leftInset - rightInset, bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(leftInset, 0, imageSize.width - leftInset - rightInset, bottomInset)));
-    
-    // Draw bottom right corner
-    CGContextDrawImage(context, CGRectMake(rect.origin.x + rect.size.width - rightInset, rect.origin.y + rect.size.height - bottomInset, rightInset, bottomInset), CGImageCreateWithImageInRect(image, CGRectMake(imageSize.width - rightInset, 0, rightInset, bottomInset)));
+    // Release all sub-images
+    if (topLeft) CGImageRelease(topLeft);
+    if (topEdge) CGImageRelease(topEdge);
+    if (topRight) CGImageRelease(topRight);
+    if (leftEdge) CGImageRelease(leftEdge);
+    if (center) CGImageRelease(center);
+    if (rightEdge) CGImageRelease(rightEdge);
+    if (bottomLeft) CGImageRelease(bottomLeft);
+    if (bottomEdge) CGImageRelease(bottomEdge);
+    if (bottomRight) CGImageRelease(bottomRight);
 }
 
 CGImageRef shadow_png = NULL; 
 long ServerShadowSurfaceNew(void * shadow_ptr /* WSShadow:: */, void * param_1,void * param_2)
 {
-    if (!shadow_png)
-        shadow_png = ImageFromFile("/Library/wsfun/shadow.png");
-
-    // Create a new iOSurface
+    // Create a new iOSurface first
     long k = ServerShadowSurfaceOld(shadow_ptr, param_1, param_2);
     struct ServerShadow * shadow = (struct ServerShadow *)shadow_ptr;
+    
+    if (!shadow || !shadow->surface) {
+        return k;
+    }
 
-    IOSurfaceLock(shadow->surface, 0, NULL);
+    // Load image only once and check for failure
+    if (!shadow_png) {
+        shadow_png = ImageFromFile("/Library/wsfun/shadow.png");
+        if (!shadow_png) {
+            return k;
+        }
+    }
+
+    // Lock surface with error checking
+    if (IOSurfaceLock(shadow->surface, 0, NULL) != kIOReturnSuccess) {
+        return k;
+    }
+
     int width = IOSurfaceGetWidth(shadow->surface);
     int height = IOSurfaceGetHeight(shadow->surface);
-
-    // Create a bitmap context for the surface
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(IOSurfaceGetBaseAddress(shadow->surface),
-                                                 width,
-                                                 height,
-                                                 8, // bits per component
-                                                 IOSurfaceGetBytesPerRow(shadow->surface),
-                                                 CGColorSpaceCreateDeviceRGB(),
-                                                 kCGImageAlphaPremultipliedLast);
-
-    bool WindowHideShadow = true;
-    bool WindowDecorations = true;
+                                               width,
+                                               height,
+                                               8,
+                                               IOSurfaceGetBytesPerRow(shadow->surface),
+                                               colorSpace,
+                                               kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(colorSpace);
+    
+    if (!context) {
+        IOSurfaceUnlock(shadow->surface, 0, 0);
+        return k;
+    }
 
     if (WindowHideShadow) {
         CGContextClearRect(context, CGRectMake(0, 0, width, height));
-    }
-
-    if (WindowDecorations) {
-        DrawNineSlice(context, shadow_png, CGRectMake(0, 0, width, height), 19); // Example insets)
-        //CGContextClearRect(context, CGRectMake(0, 0, width, height)); // final clear of the REAL window rect.
+    } else if (WindowDecorations) {
+        CGContextClearRect(context, CGRectMake(0, 0, width, height));
+        DrawNineSlice(context, shadow_png, CGRectMake(0, 0, width, height), 1); // Reduced insets
     }
     
     CGContextFlush(context);
     CGContextRelease(context);
 
     SwapRedBlue(shadow->surface);
-    // Return the iOSurface
     IOSurfaceUnlock(shadow->surface, 0, 0);
 
     return k;
@@ -182,26 +197,26 @@ bool WantsRenderAbove() {
 }
 
 bool NinePartable() {
-    return true;
+    return WindowDecorations; // Only return true if decorations are enabled
 }
 
-void *magic;
-void (*GumInterceptorReplaceFunc)(void * self, void * function_address, void * replacement_function, void * replacement_data, void ** original_function);
-void *(*GumModuleFindExportByNameFunc)(const char * module_name, const char * symbol_name);
-void (*GumInterceptorBeginTransactionFunc)(void * self);
-void (*GumInterceptorEndTransactionFunc)(void * self);
+GumInterceptor *magic;
+void (*GumInterceptorReplaceFunc)(GumInterceptor * self, gpointer function_address, gpointer replacement_function, gpointer replacement_data, gpointer * original_function);
+void *(*GumModuleFindExportByNameFunc)(const gchar * module_name, const gchar * symbol_name);
+void (*GumInterceptorBeginTransactionFunc)(GumInterceptor * self);
+void (*GumInterceptorEndTransactionFunc)(GumInterceptor * self);
 
 void ClientHook(void * func, void * new, void ** old)
 {
     if (func != NULL) 
     { 
         GumInterceptorBeginTransactionFunc(magic);
-        GumInterceptorReplaceFunc(magic, (void *)func, new, NULL, old);
+        GumInterceptorReplaceFunc(magic, (gpointer)func, new, NULL, old);
         GumInterceptorEndTransactionFunc(magic);
     }
 }
 
-void InstantiateClientHooks(void *interceptor) {
+void InstantiateClientHooks(GumInterceptor *interceptor) {
     // Setup hooking
     magic = interceptor;
     void *hooking = dlopen("/usr/local/bin/ammonia/fridagum.dylib", RTLD_NOW | RTLD_GLOBAL);
@@ -214,15 +229,9 @@ void InstantiateClientHooks(void *interceptor) {
     
     if (skylight != NULL) { 
         // Hooks the shadow image, and properties
-        
         ClientHook(sr_resolve_symbol(skylight, "_WSWindowShadowWantsRenderAbove"), WantsRenderAbove, NULL); 
         ClientHook(sr_resolve_symbol(skylight, "__ZL28is_shadow_mask_nine_partableP9CGXWindow"), NinePartable, NULL); 
         ClientHook(sr_resolve_symbol(skylight, "_WSWindowSetHasActiveShadow"), ServerSetHasActiveShadowNew, &ServerSetHasActiveShadowOld); 
         ClientHook(sr_resolve_symbol(skylight, "__ZN8WSShadowC1EP11__IOSurface19WSShadowDescription"), ServerShadowSurfaceNew, &ServerShadowSurfaceOld); 
-
-        // Menubar
-        // ClientHook(sr_resolve_symbol(skylight, "__ZL40configure_menu_bar_layers_for_backgroundP17PKGMenuBarContextb"), MenubarLayersNew, &MenubarLayersOld); // Needs fixup on sonoma
-        // ClientHook(sr_resolve_symbol(skylight, "__ZL25menu_bar_bounds_for_spaceP19PKGManagedMenuSpace"), HeightNew, &HeightOld); 
-        // ClientHook(sr_resolve_symbol(skylight, "_SLSGetDisplayMenubarHeight"), ClientRenderHeightNew, NULL);
     }
 }

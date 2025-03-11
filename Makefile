@@ -12,6 +12,7 @@ INCLUDE_PATH := $(shell xcrun -sdk macosx --show-sdk-platform-path)/Developer/SD
 # Compiler and flags
 CFLAGS = -Wall -Wextra -O2 \
     -fobjc-arc \
+    -Wno-deprecated-declarations \
     -I$(SOURCE_DIR) \
     -I$(SOURCE_DIR)/ZKSwizzle \
     -I$(SOURCE_DIR)/headers \
@@ -22,15 +23,26 @@ CFLAGS = -Wall -Wextra -O2 \
     -F/System/Library/PrivateFrameworks \
     -I$(SDKROOT)/usr/include \
     -fmodules \
-    -mmacosx-version-min=13.0
+    -mmacosx-version-min=15.0 \
+    -fobjc-arc \
+    -fexceptions \
+    -fvisibility=hidden \
+    -Wno-implicit-function-declaration
 
 # Add C++ specific flags
 CXXFLAGS = $(CFLAGS) -stdlib=libc++ \
     -I$(SDKROOT)/usr/include/c++/v1 \
     -I$(SDKROOT)/usr/include \
-    -I$(XCODE_TOOLCHAIN)/usr/include/c++/v1
+    -I$(XCODE_TOOLCHAIN)/usr/include/c++/v1 \
+	-Wno-implicit-function-declaration
 
 ARCHS = -arch x86_64 -arch arm64 -arch arm64e
+
+# Linker flags
+LDFLAGS = -Wl,-U,_inject_entry -framework Foundation -framework IOSurface \
+    -Wl,-U,_SLWindowServerShadowData \
+    -Wl,-U,_SLSSetWindowShadowProperties \
+    -Wl,-U,_SLSWindowSetShadowProperties
 
 # Project name and paths
 PROJECT = macwmfx
@@ -43,7 +55,9 @@ SOURCE_DIR = macwmfx
 
 # Update source file collection to avoid duplicates
 DYLIB_SOURCES = $(sort \
-    $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c, \
+    $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c \
+    $(SOURCE_DIR)/userHooks.m $(SOURCE_DIR)/userHooks_original.m \
+    $(SOURCE_DIR)/windows/windowShadow/ShadowColor.m, \
     $(SOURCE_DIR)/ZKSwizzle/ZKSwizzle.m \
     $(wildcard $(SOURCE_DIR)/*.m) \
     $(wildcard $(SOURCE_DIR)/config/*.m) \
@@ -72,9 +86,9 @@ DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o) \
     $(BUILD_DIR)/SymRez/SymRez.o \
     $(SWIFT_OBJECTS)
 
-# CLI tool source and object
-CLI_SOURCE = $(SOURCE_DIR)/CLITool.m
-CLI_OBJECT = $(BUILD_DIR)/CLITool.o
+# CLI tool source and object - update to include config files
+CLI_SOURCES = $(SOURCE_DIR)/CLITool.m $(wildcard $(SOURCE_DIR)/config/*.m)
+CLI_OBJECTS = $(CLI_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
 
 # Installation targets
 INSTALL_PATH = $(INSTALL_DIR)/$(DYLIB_NAME)
@@ -88,7 +102,32 @@ DYLIB_FLAGS = -dynamiclib \
     -compatibility_version 1.0.0 \
     -current_version 1.0.0 \
     -fvisibility=default \
-    -mmacosx-version-min=13.0
+    -mmacosx-version-min=15.0 \
+    -all_load \
+    -Wl,-export_dynamic
+
+# Link dylib (single definition)
+$(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
+	$(CXX) $(DYLIB_FLAGS) $(ARCHS) \
+	-isysroot $(SDKROOT) \
+	-I$(SDKROOT)/usr/include \
+	-I$(SOURCE_DIR) \
+	-I$(SOURCE_DIR)/headers \
+	-I$(SOURCE_DIR)/SymRez \
+	-I$(XCODE_TOOLCHAIN)/usr/include \
+	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
+	$(DYLIB_OBJECTS) -o $@ \
+	-F$(FRAMEWORK_PATH) \
+	-F$(PRIVATE_FRAMEWORK_PATH) \
+	-F/System/Library/PrivateFrameworks \
+	$(PUBLIC_FRAMEWORKS) \
+	$(PRIVATE_FRAMEWORKS) \
+	-L$(SDKROOT)/usr/lib \
+	-L$(XCODE_TOOLCHAIN)/usr/lib \
+	-L/usr/lib \
+	-L/Library/wsfun \
+	-stdlib=libc++ \
+	$(LDFLAGS)
 
 # Add Swift compiler
 SWIFTC = swiftc
@@ -103,7 +142,8 @@ PRIVATE_FRAMEWORK_PATH = $(SDKROOT)/System/Library/PrivateFrameworks
 
 # Split frameworks into public and private, adding IOKit and IOSurface
 PUBLIC_FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -framework Cocoa \
-    -framework CoreFoundation -framework CoreImage -framework IOKit -framework IOSurface
+    -framework CoreFoundation -framework CoreImage -framework IOKit -framework IOSurface \
+    -framework CoreGraphics
 
 PRIVATE_FRAMEWORKS = -framework SkyLight
 
@@ -159,28 +199,8 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.swift | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(SWIFTC) -I./SymRez -c $< -o $@
 
-# Link dylib
-$(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
-	$(CC) $(DYLIB_FLAGS) $(ARCHS) \
-	-isysroot $(SDKROOT) \
-	-I$(SDKROOT)/usr/include \
-	-I$(SOURCE_DIR) \
-	-I$(SOURCE_DIR)/headers \
-	-I$(SOURCE_DIR)/SymRez \
-	-I$(XCODE_TOOLCHAIN)/usr/include \
-	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
-	$(DYLIB_OBJECTS) -o $@ \
-	-F$(FRAMEWORK_PATH) \
-	-F$(PRIVATE_FRAMEWORK_PATH) \
-	-F/System/Library/PrivateFrameworks \
-	$(PUBLIC_FRAMEWORKS) \
-	$(PRIVATE_FRAMEWORKS) \
-	-L$(SDKROOT)/usr/lib \
-	-L$(XCODE_TOOLCHAIN)/usr/lib \
-	-L/usr/lib
-
-# Build CLI tool
-$(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
+# Build CLI tool - update to compile sources first
+$(BUILD_DIR)/$(CLI_NAME): $(CLI_OBJECTS) $(BUILD_DIR)/$(DYLIB_NAME)
 	$(CC) $(CFLAGS) $(ARCHS) \
 	-fmodules \
 	-I$(SOURCE_DIR)/SymRez \
@@ -191,7 +211,8 @@ $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
 	-F$(FRAMEWORK_PATH) \
 	-F$(PRIVATE_FRAMEWORK_PATH) \
 	-F/System/Library/PrivateFrameworks \
-	$(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME) \
+	$(CLI_OBJECTS) \
+	-L$(BUILD_DIR) -lmacwmfx \
 	$(PUBLIC_FRAMEWORKS) \
 	$(PRIVATE_FRAMEWORKS) \
 	-framework Foundation \
@@ -199,10 +220,13 @@ $(BUILD_DIR)/$(CLI_NAME): $(CLI_SOURCE) $(BUILD_DIR)/$(DYLIB_NAME)
 	-framework QuartzCore \
 	-framework Cocoa \
 	-framework CoreFoundation \
+	-framework CoreGraphics \
+	-framework IOSurface \
 	-framework SkyLight \
 	-Wl,-rpath,$(INSTALL_DIR) \
 	-fvisibility=default \
-	-o $@
+	-o $@ \
+	$(LDFLAGS)
 
 # Install the dylib, CLI tool, and blacklist
 install: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)

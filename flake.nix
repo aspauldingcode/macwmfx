@@ -80,6 +80,8 @@
             darwin.apple_sdk.frameworks.CoreFoundation
             darwin.apple_sdk.frameworks.SkyLight
             darwin.apple_sdk.frameworks.CoreImage
+            darwin.apple_sdk.frameworks.CoreGraphics
+            darwin.apple_sdk.frameworks.IOSurface
             darwin.apple_sdk.libs.xpc
             darwin.libobjc
             pkgs.swift
@@ -90,7 +92,7 @@
             export CC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
             export CXX="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
             export CXXFLAGS="-stdlib=libc++"
-            export LDFLAGS="-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib"
+            export LDFLAGS="-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib -Wl,-U,_inject_entry"
 
             # Clear any extra flags inserted by the Nix clang wrapper.
             export NIX_CC_WRAPPER_FLAGS=""
@@ -108,10 +110,14 @@
               ''${CC} \
                 -fmodules \
                 -fobjc-arc \
+                -fexceptions \
+                -fvisibility=hidden \
                 -Wall \
                 -Wextra \
+                -Wno-implicit-function-declaration \
                 -O2 \
                 -arch x86_64 -arch arm64 -arch arm64e \
+                -mmacosx-version-min=13.0
                 -isysroot ${sdkRoot} \
                 -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
                 -I${sdkRoot}/System/Library/Frameworks/Foundation.framework/Headers \
@@ -134,6 +140,8 @@
               ''${CXX} \
                 -fmodules \
                 -fobjc-arc \
+                -fexceptions \
+                -fvisibility=hidden \
                 -Wall \
                 -Wextra \
                 -O2 \
@@ -161,6 +169,8 @@
                 -Wall \
                 -Wextra \
                 -O2 \
+                -fexceptions \
+                -fvisibility=hidden \
                 -arch x86_64 -arch arm64 -arch arm64e \
                 -isysroot ${sdkRoot} \
                 -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
@@ -185,6 +195,8 @@
                 -Wall \
                 -Wextra \
                 -O2 \
+                -fexceptions \
+                -fvisibility=hidden \
                 -arch x86_64 -arch arm64 -arch arm64e \
                 -isysroot ${sdkRoot} \
                 -I${sdkRoot}/System/Library/Frameworks/AppKit.framework/Headers \
@@ -216,6 +228,8 @@
               -Wall \
               -Wextra \
               -O2 \
+              -fexceptions \
+              -fvisibility=hidden \
               -arch x86_64 -arch arm64 -arch arm64e \
               -isysroot ${sdkRoot} \
               -fmodules \
@@ -230,33 +244,53 @@
               -IZKSwizzle \
               -ISymRez \
               -c ./macwmfx/SymRez/SymRez.c \
-              -o build/macwmfx/macwmfx/SymRez/SymRez.o
+              -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -L./SymRez \
+              -lsymrez
 
             # Link dynamic library
             ''${CXX} \
-              -dynamiclib \
-              -arch x86_64 -arch arm64 -arch arm64e \
+              -o build/libmacwmfx.dylib \
+              -v
+              -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -L./SymRez \
+              -lsymrez
               -install_name "@rpath/libmacwmfx.dylib" \
               -compatibility_version 1.0.0 \
               -current_version 1.0.0 \
-              $(find build/macwmfx -name "*.o") \
-              -framework Foundation \
+              -o build/libmacwmfx.dylib \
+              -v
+              -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -o build/libmacwmfx.dylib \
+              -v
+              -lsymrez
               -framework AppKit \
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
-              -framework CoreImage \
-              -framework SkyLight \
-              -F/System/Library/PrivateFrameworks \
               -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -L./SymRez \
+              -lsymrez
+              -framework CoreGraphics \
+              -framework IOSurface \
+              -framework SkyLight \
+              -o build/libmacwmfx.dylib \
+              -v
+              -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
+              -L./SymRez \
+              -lsymrez
               -L${sdkRoot}/usr/lib \
               -stdlib=libc++ \
-              -o build/libmacwmfx.dylib
+              -Wl,-U,_inject_entry \
+              -o build/libmacwmfx.dylib \
+              -v
 
             # Build CLI tool
             ''${CC} \
               -fmodules \
               -fobjc-arc \
+              -fexceptions \
+              -fvisibility=hidden \
               -Wall \
               -Wextra \
               -O2 \
@@ -278,8 +312,11 @@
               -framework QuartzCore \
               -framework Cocoa \
               -framework CoreFoundation \
+              -framework CoreGraphics \
+              -framework IOSurface \
               -framework SkyLight \
               -Wl,-rpath,/usr/local/bin/ammonia/tweaks \
+              -Wl,-U,_inject_entry \
               -o build/macwmfx_cli
           '';
 

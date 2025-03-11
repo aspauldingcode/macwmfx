@@ -9,6 +9,8 @@
 #ifndef SymRez_h
 #define SymRez_h
 
+#include <stdint.h>
+#include <stdlib.h>
 #include "Base.h"
 #include "Core.h"
 #include "SymRez.hpp"

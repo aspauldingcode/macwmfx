@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import "headers/macwmfx_globals.h"
+#import "headers/configParser.h"  // Add this line
 
 // Function to update all windows
 void updateAllWindows(void) {

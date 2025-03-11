@@ -8,3 +8,7 @@ result*
 # C/C++ Language Server Cache
 .ccls-cache/
 .ccls-cache/@*
+
+# macOS enshitifiers
+.DS_Store
+macwmfx/.DS_Store
