@@ -57,28 +57,18 @@ SOURCE_DIR = macwmfx
 DYLIB_SOURCES = $(sort \
     $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c \
 		$(SOURCE_DIR)/windows/windowShadow/ShadowColor.m \
-		$(SOURCE_DIR)/objc_hook.m, \
+		$(SOURCE_DIR)/c_hook.m, \
         $(SOURCE_DIR)/ZKSwizzle/ZKSwizzle.m \
         $(wildcard $(SOURCE_DIR)/*.m) \
         $(wildcard $(SOURCE_DIR)/config/*.m) \
         $(wildcard $(SOURCE_DIR)/dock/*.m) \
         $(wildcard $(SOURCE_DIR)/menubar/*.m) \
         $(wildcard $(SOURCE_DIR)/spaces/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowAnimations/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowBehavior/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowBlur/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowMaskShapes/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowSizeContraints/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowTitlebar/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowTrafficLights/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/windowTransparency/*.m)))
+        $(wildcard $(SOURCE_DIR)/windows/*/*.m)))
 
 # Collect MM files separately
 MM_SOURCES = $(sort \
-    $(wildcard $(SOURCE_DIR)/windows/windowOutline/*.mm) \
-    $(wildcard $(SOURCE_DIR)/windows/windowShadow/*.mm))
+    $(wildcard $(SOURCE_DIR)/windows/*/*.mm))
 
 # Update object files to include both .m and .mm sources
 DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o) \
