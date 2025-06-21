@@ -1,12 +1,20 @@
 # SymRez
+
 When dlsym isn't enough
 
 ## When to use?
-Although dlsym is very powerful, it usually plays by the rules and will not resolve non-exported symbols. This is where SymRez comes into play. SymRez works by manually resolving symbol names to their pointer locations in the symbol table inside Mach-O files. Works especially well for hooking symbolicated global variables, which dlsym will not :) 
 
-Note: SymRez does not demangle symbols. The raw symbol name is required for this to work.
+Although dlsym is very powerful, it usually plays by the rules and will not
+resolve non-exported symbols. This is where SymRez comes into play. SymRez works
+by manually resolving symbol names to their pointer locations in the symbol
+table inside Mach-O files. Works especially well for hooking symbolicated global
+variables, which dlsym will not :)
+
+Note: SymRez does not demangle symbols. The raw symbol name is required for this
+to work.
 
 ## API
+
 ```
 #ifndef SymRez_h
 #define SymRez_h
@@ -53,9 +61,9 @@ void * sr_resolve_symbol(symrez_t symrez, const char *symbol);
     @discussion String passed to 'callback' may be ephemeral . */
 void sr_for_each(symrez_t symrez, symrez_function_t callback);
 
-/*! @function sr_free
+/*! @function symrez_free
     @abstract Release all resources allocated for this symrez object */
-void sr_free(symrez_t);
+void symrez_free(symrez_t);
 
 /*! @function symrez_resolve_once
     @abstract Lookup a single symbol. Does not allocate memory but not recommended for multiple lookups
@@ -76,17 +84,16 @@ void * symrez_resolve_once_mh(mach_header_t header, const char *symbol);
 ```
 
 ## Example
+
 ```
-void* (*__CGSWindowByID)(int windowID);
-void* (*__BunldeInfo)(const CFURLRef bundleURL);
-
-...
-
-symrez_t skylight = symrez_new(“SkyLight”);
-if(skylight != NULL) {
-	__CGSWindowByID = sr_resolve_symbol(skylight, "_CGSWindowByID");
-
-symrez_t launchservices = symrez_new(“LaunchServices”);
-if(launchservices != NULL) {
-	__BundleInfo = sr_resolve_symbol(LaunchServices, "__ZN10BundleInfoC2EPK7__CFURL");
+// Example: Resolving a symbol from a system framework
+symrez_t framework = symrez_new("SomeFramework");
+if(framework != NULL) {
+    void* symbol = sr_resolve_symbol(framework, "_SomePrivateFunction");
+    if(symbol != NULL) {
+        // Use the resolved symbol
+        printf("Symbol resolved successfully\n");
+    }
+    symrez_free(framework);
+}
 ```

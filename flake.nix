@@ -62,7 +62,6 @@
             darwin.apple_sdk.frameworks.AppKit
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
-            darwin.apple_sdk.frameworks.SkyLight
             pkgs.swift
           ];
         };
@@ -73,14 +72,13 @@
           src = ./.;
 
           buildInputs = with pkgs; [
-            darwin.apple_sdk.frameworks.Cocoa
             darwin.apple_sdk.frameworks.Foundation
             darwin.apple_sdk.frameworks.AppKit
+            darwin.apple_sdk.frameworks.CoreGraphics
+            darwin.apple_sdk.frameworks.ApplicationServices
             darwin.apple_sdk.frameworks.QuartzCore
             darwin.apple_sdk.frameworks.CoreFoundation
-            darwin.apple_sdk.frameworks.SkyLight
             darwin.apple_sdk.frameworks.CoreImage
-            darwin.apple_sdk.frameworks.CoreGraphics
             darwin.apple_sdk.frameworks.IOSurface
             darwin.apple_sdk.libs.xpc
             darwin.libobjc
@@ -273,9 +271,7 @@
               -lsymrez
               -framework CoreGraphics \
               -framework IOSurface \
-              -framework SkyLight \
               -o build/libmacwmfx.dylib \
-              -v
               -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib \
               -L./SymRez \
               -lsymrez
@@ -314,7 +310,6 @@
               -framework CoreFoundation \
               -framework CoreGraphics \
               -framework IOSurface \
-              -framework SkyLight \
               -Wl,-rpath,/usr/local/bin/ammonia/tweaks \
               -Wl,-U,_inject_entry \
               -o build/macwmfx_cli

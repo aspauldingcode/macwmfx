@@ -1,333 +1,237 @@
+# macwmfx Build System with Feature Flags
+# =======================================
+
 # Dynamic compiler detection
 XCODE_PATH := $(shell xcode-select -p)
-XCODE_TOOLCHAIN := $(XCODE_PATH)/Toolchains/XcodeDefault.xctoolchain
 CC := $(shell xcrun -find clang)
 CXX := $(shell xcrun -find clang++)
 
-# SDK paths (already dynamic, but grouped here for clarity)
+# SDK paths
 SDKROOT ?= $(shell xcrun --show-sdk-path)
-ISYSROOT := $(shell xcrun -sdk macosx --show-sdk-path)
-INCLUDE_PATH := $(shell xcrun -sdk macosx --show-sdk-platform-path)/Developer/SDKs/MacOSX.sdk/usr/include
 
-# Compiler and flags
-CFLAGS = -Wall -Wextra -O2 \
+# =============================================================================
+# BUILD CONFIGURATION FLAGS
+# =============================================================================
+
+# Build configuration (debug, release, minimal, experimental)
+CONFIG ?= debug
+
+# Feature flags - can be overridden from command line
+ENABLE_WINDOW_BORDERS ?= 1
+ENABLE_WINDOW_SHADOWS ?= 1
+ENABLE_WINDOW_TRANSPARENCY ?= 1
+ENABLE_WINDOW_BLUR ?= 1
+ENABLE_TITLEBAR_TWEAKS ?= 1
+ENABLE_TRAFFIC_LIGHTS ?= 1
+ENABLE_RESIZE_LIMITS ?= 1
+ENABLE_DOCK_TWEAKS ?= 1
+ENABLE_MENUBAR_TWEAKS ?= 1
+ENABLE_SPACES_TWEAKS ?= 1
+ENABLE_ADVANCED_SHADOWS ?= 0
+ENABLE_CUSTOM_ANIMATIONS ?= 0
+
+# Configuration-specific flags
+ifeq ($(CONFIG),debug)
+    CFLAGS_CONFIG = -DDEBUG=1 -g -O0
+else ifeq ($(CONFIG),release)
+    CFLAGS_CONFIG = -DNDEBUG=1 -O2
+else ifeq ($(CONFIG),minimal)
+    CFLAGS_CONFIG = -DNDEBUG=1 -O2
+    # Disable most features for minimal build
+    ENABLE_WINDOW_BORDERS = 0
+    ENABLE_WINDOW_BLUR = 0
+    ENABLE_TITLEBAR_TWEAKS = 0
+    ENABLE_DOCK_TWEAKS = 0
+    ENABLE_MENUBAR_TWEAKS = 0
+    ENABLE_SPACES_TWEAKS = 0
+else ifeq ($(CONFIG),experimental)
+    CFLAGS_CONFIG = -DDEBUG=1 -g -O0
+    # Enable experimental features
+    ENABLE_ADVANCED_SHADOWS = 1
+    ENABLE_CUSTOM_ANIMATIONS = 1
+else
+    $(error Unknown CONFIG: $(CONFIG). Use debug, release, minimal, or experimental)
+endif
+
+# Convert feature flags to compiler flags
+FEATURE_FLAGS = \
+    -DMACWMFX_ENABLE_WINDOW_BORDERS=$(ENABLE_WINDOW_BORDERS) \
+    -DMACWMFX_ENABLE_WINDOW_SHADOWS=$(ENABLE_WINDOW_SHADOWS) \
+    -DMACWMFX_ENABLE_WINDOW_TRANSPARENCY=$(ENABLE_WINDOW_TRANSPARENCY) \
+    -DMACWMFX_ENABLE_WINDOW_BLUR=$(ENABLE_WINDOW_BLUR) \
+    -DMACWMFX_ENABLE_TITLEBAR_TWEAKS=$(ENABLE_TITLEBAR_TWEAKS) \
+    -DMACWMFX_ENABLE_TRAFFIC_LIGHTS=$(ENABLE_TRAFFIC_LIGHTS) \
+    -DMACWMFX_ENABLE_RESIZE_LIMITS=$(ENABLE_RESIZE_LIMITS) \
+    -DMACWMFX_ENABLE_DOCK_TWEAKS=$(ENABLE_DOCK_TWEAKS) \
+    -DMACWMFX_ENABLE_MENUBAR_TWEAKS=$(ENABLE_MENUBAR_TWEAKS) \
+    -DMACWMFX_ENABLE_SPACES_TWEAKS=$(ENABLE_SPACES_TWEAKS) \
+    -DMACWMFX_ENABLE_ADVANCED_SHADOWS=$(ENABLE_ADVANCED_SHADOWS) \
+    -DMACWMFX_ENABLE_CUSTOM_ANIMATIONS=$(ENABLE_CUSTOM_ANIMATIONS)
+
+# =============================================================================
+# COMPILER SETTINGS
+# =============================================================================
+
+# Architecture support for FAT binary
+ARCHS = -arch x86_64 -arch arm64 -arch arm64e
+
+# Compiler flags
+CFLAGS = -Wall -Wextra \
+    $(CFLAGS_CONFIG) \
+    $(FEATURE_FLAGS) \
+    $(ARCHS) \
     -fobjc-arc \
     -Wno-deprecated-declarations \
     -I$(SOURCE_DIR) \
     -I$(SOURCE_DIR)/ZKSwizzle \
     -I$(SOURCE_DIR)/headers \
-    -I$(SOURCE_DIR)/config \
     -I$(SOURCE_DIR)/SymRez \
     -isysroot $(SDKROOT) \
     -iframework $(SDKROOT)/System/Library/Frameworks \
-    -F/System/Library/PrivateFrameworks \
-    -I$(SDKROOT)/usr/include \
-    -fmodules \
-    -mmacosx-version-min=15.0 \
-    -fobjc-arc \
-    -fexceptions \
-    -fvisibility=hidden \
-    -Wno-implicit-function-declaration
+    -F/System/Library/PrivateFrameworks
 
-# Add C++ specific flags
-CXXFLAGS = $(CFLAGS) -stdlib=libc++ \
-    -I$(SDKROOT)/usr/include/c++/v1 \
-    -I$(SDKROOT)/usr/include \
-    -I$(XCODE_TOOLCHAIN)/usr/include/c++/v1 \
-	-Wno-implicit-function-declaration
-
-ARCHS = -arch x86_64 -arch arm64 -arch arm64e
-
-# Linker flags
-LDFLAGS = -Wl,-U,_inject_entry -framework Foundation -framework IOSurface \
-    -Wl,-U,_SLWindowServerShadowData \
-    -Wl,-U,_SLSSetWindowShadowProperties \
-    -Wl,-U,_SLSWindowSetShadowProperties
-	
-# Project name and paths
-PROJECT = macwmfx
-DYLIB_NAME = lib$(PROJECT).dylib
-CLI_NAME = $(PROJECT)
-BUILD_DIR = build
-INSTALL_DIR = /usr/local/bin/ammonia/tweaks
-CLI_INSTALL_DIR = /usr/local/bin
-SOURCE_DIR = macwmfx
-
-# Update source file collection to avoid duplicates
-DYLIB_SOURCES = $(sort \
-    $(filter-out $(SOURCE_DIR)/CLITool.m $(SOURCE_DIR)/SymRez/SymRez.c \
-		$(SOURCE_DIR)/windows/windowShadow/ShadowColor.m \
-		$(SOURCE_DIR)/c_hook.m, \
-        $(SOURCE_DIR)/ZKSwizzle/ZKSwizzle.m \
-        $(wildcard $(SOURCE_DIR)/*.m) \
-        $(wildcard $(SOURCE_DIR)/config/*.m) \
-        $(wildcard $(SOURCE_DIR)/dock/*.m) \
-        $(wildcard $(SOURCE_DIR)/menubar/*.m) \
-        $(wildcard $(SOURCE_DIR)/spaces/*.m) \
-        $(wildcard $(SOURCE_DIR)/windows/*/*.m)))
-
-# Collect MM files separately
-MM_SOURCES = $(sort \
-    $(wildcard $(SOURCE_DIR)/windows/*/*.mm))
-
-# Update object files to include both .m and .mm sources
-DYLIB_OBJECTS = $(DYLIB_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o) \
-    $(MM_SOURCES:$(SOURCE_DIR)/%.mm=$(BUILD_DIR)/%.o) \
-    $(BUILD_DIR)/SymRez/SymRez.o \
-    $(SWIFT_OBJECTS)
-
-# CLI tool source and object - update to include config files
-CLI_SOURCES = $(SOURCE_DIR)/CLITool.m $(wildcard $(SOURCE_DIR)/config/*.m)
-CLI_OBJECTS = $(CLI_SOURCES:$(SOURCE_DIR)/%.m=$(BUILD_DIR)/%.o)
-
-# Installation targets
-INSTALL_PATH = $(INSTALL_DIR)/$(DYLIB_NAME)
-CLI_INSTALL_PATH = $(CLI_INSTALL_DIR)/$(CLI_NAME)
-BLACKLIST_SOURCE = libmacwmfx.dylib.blacklist
-BLACKLIST_DEST = $(INSTALL_DIR)/libmacwmfx.dylib.blacklist
-
-# Dylib settings
-DYLIB_FLAGS = -dynamiclib \
-    -install_name @rpath/$(DYLIB_NAME) \
+# Linker flags for dylib
+LDFLAGS = -dynamiclib \
+    -install_name @rpath/libmacwmfx.dylib \
     -compatibility_version 1.0.0 \
     -current_version 1.0.0 \
-    -fvisibility=default \
-    -mmacosx-version-min=15.0 \
-    -all_load \
-    -Wl,-export_dynamic
+    -framework Foundation \
+    -framework AppKit \
+    -framework CoreGraphics \
+    -framework ApplicationServices \
+    -framework QuartzCore \
+    -isysroot $(SDKROOT) \
+    $(ARCHS)
 
-# Link dylib (single definition)
-$(BUILD_DIR)/$(DYLIB_NAME): $(DYLIB_OBJECTS)
-	$(CXX) $(DYLIB_FLAGS) $(ARCHS) \
-	-isysroot $(SDKROOT) \
-	-I$(SDKROOT)/usr/include \
-	-I$(SOURCE_DIR) \
-	-I$(SOURCE_DIR)/headers \
-	-I$(SOURCE_DIR)/SymRez \
-	-I$(XCODE_TOOLCHAIN)/usr/include \
-	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
-	$(DYLIB_OBJECTS) -o $@ \
-	-F$(FRAMEWORK_PATH) \
-	-F$(PRIVATE_FRAMEWORK_PATH) \
-	-F/System/Library/PrivateFrameworks \
-	$(PUBLIC_FRAMEWORKS) \
-	$(PRIVATE_FRAMEWORKS) \
-	-L$(SDKROOT)/usr/lib \
-	-L$(XCODE_TOOLCHAIN)/usr/lib \
-	-L/usr/lib \
-	-L/Library/wsfun \
-	-stdlib=libc++ \
-	$(LDFLAGS)
+# =============================================================================
+# PROJECT SETTINGS
+# =============================================================================
 
-# Add Swift compiler
-SWIFTC = swiftc
+# Directories
+SOURCE_DIR = src
+BUILD_DIR = build
 
-# Add Swift sources (excluding Package.swift)
-SWIFT_SOURCES = $(filter-out Package.swift, $(wildcard $(SOURCE_DIR)/*.swift))
-SWIFT_OBJECTS = $(SWIFT_SOURCES:$(SOURCE_DIR)/%.swift=$(BUILD_DIR)/%.o)
+# Target name with configuration suffix
+TARGET_NAME = libmacwmfx_$(CONFIG)
+TARGET = $(BUILD_DIR)/$(TARGET_NAME).dylib
 
-# Update framework paths to use dynamic SDK root
-FRAMEWORK_PATH = $(SDKROOT)/System/Library/Frameworks
-PRIVATE_FRAMEWORK_PATH = $(SDKROOT)/System/Library/PrivateFrameworks
+# Source files (automatically find all .m, .mm, .c, .cpp files)
+SOURCES = $(shell find $(SOURCE_DIR) -name "*.m" -o -name "*.c" -o -name "*.mm" -o -name "*.cpp")
+OBJECTS = $(SOURCES:$(SOURCE_DIR)/%=$(BUILD_DIR)/%.o)
 
-# Split frameworks into public and private, adding IOKit and IOSurface
-PUBLIC_FRAMEWORKS = -framework Foundation -framework AppKit -framework QuartzCore -framework Cocoa \
-    -framework CoreFoundation -framework CoreImage -framework IOKit -framework IOSurface \
-    -framework CoreGraphics
+# =============================================================================
+# BUILD TARGETS
+# =============================================================================
 
-PRIVATE_FRAMEWORKS = -framework SkyLight
+.PHONY: all clean debug release minimal experimental test install help
 
 # Default target
-all: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
+all: $(TARGET)
 
-# Create build directory and subdirectories
+# Configuration shortcuts
+debug:
+	$(MAKE) CONFIG=debug
+
+release:
+	$(MAKE) CONFIG=release
+
+minimal:
+	$(MAKE) CONFIG=minimal
+
+experimental:
+	$(MAKE) CONFIG=experimental
+
+# Main build target
+$(TARGET): $(OBJECTS) | $(BUILD_DIR)
+	@echo "Linking $(TARGET_NAME).dylib ($(CONFIG) configuration)..."
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+	@echo "Build complete: $@"
+	@echo ""
+	@echo "Enabled features:"
+	@echo "  Window Borders: $(ENABLE_WINDOW_BORDERS)"
+	@echo "  Window Shadows: $(ENABLE_WINDOW_SHADOWS)"
+	@echo "  Window Transparency: $(ENABLE_WINDOW_TRANSPARENCY)"
+	@echo "  Window Blur: $(ENABLE_WINDOW_BLUR)"
+	@echo "  Titlebar Tweaks: $(ENABLE_TITLEBAR_TWEAKS)"
+	@echo "  Traffic Lights: $(ENABLE_TRAFFIC_LIGHTS)"
+	@echo "  Resize Limits: $(ENABLE_RESIZE_LIMITS)"
+	@echo "  Dock Tweaks: $(ENABLE_DOCK_TWEAKS)"
+	@echo "  Menubar Tweaks: $(ENABLE_MENUBAR_TWEAKS)"
+	@echo "  Spaces Tweaks: $(ENABLE_SPACES_TWEAKS)"
+	@echo "  Advanced Shadows: $(ENABLE_ADVANCED_SHADOWS)"
+	@echo "  Custom Animations: $(ENABLE_CUSTOM_ANIMATIONS)"
+
+# Object file compilation rules
+$(BUILD_DIR)/%.m.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.c.o: $(SOURCE_DIR)/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.mm.o: $(SOURCE_DIR)/%.mm | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<..."
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.cpp.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<..."
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+# Create build directory
 $(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(BUILD_DIR)/config
-	@mkdir -p $(BUILD_DIR)/dock
-	@mkdir -p $(BUILD_DIR)/menubar
-	@mkdir -p $(BUILD_DIR)/spaces
-	@mkdir -p $(BUILD_DIR)/windows/windowAnimations
-	@mkdir -p $(BUILD_DIR)/windows/windowBehavior
-	@mkdir -p $(BUILD_DIR)/windows/windowBlur
-	@mkdir -p $(BUILD_DIR)/windows/windowMaskShapes
-	@mkdir -p $(BUILD_DIR)/windows/windowOutline
-	@mkdir -p $(BUILD_DIR)/windows/windowShadow
-	@mkdir -p $(BUILD_DIR)/windows/windowSizeContraints
-	@mkdir -p $(BUILD_DIR)/windows/windowTitlebar
-	@mkdir -p $(BUILD_DIR)/windows/windowTrafficLights
-	@mkdir -p $(BUILD_DIR)/windows/windowTransparency
-	@mkdir -p $(BUILD_DIR)/SymRez
+	mkdir -p $(BUILD_DIR)
 
-# Compile source files
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(ARCHS) -c $< -o $@
-
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.mm | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(ARCHS) -fmodules -c $< -o $@
-
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(ARCHS) -c $< -o $@
-
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CC) -Wall -Wextra -O2 $(ARCHS) \
-	-isysroot $(SDKROOT) \
-	-I$(SDKROOT)/usr/include \
-	-I$(SOURCE_DIR) \
-	-I$(SOURCE_DIR)/headers \
-	-I$(SOURCE_DIR)/SymRez \
-	-I$(XCODE_TOOLCHAIN)/usr/include \
-	-I$(XCODE_TOOLCHAIN)/usr/lib/clang/15.0.0/include \
-	-c $< -o $@
-
-# Add Swift compilation rule
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.swift | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(SWIFTC) -I./SymRez -c $< -o $@
-
-# Build CLI tool - update to compile sources first
-$(BUILD_DIR)/$(CLI_NAME): $(CLI_OBJECTS) $(BUILD_DIR)/$(DYLIB_NAME)
-	$(CC) $(CFLAGS) $(ARCHS) \
-	-fmodules \
-	-I$(SOURCE_DIR)/SymRez \
-	-isysroot $(SDKROOT) \
-	-I$(SDKROOT)/System/Library/Frameworks/AppKit.framework/Headers \
-	-I$(SDKROOT)/System/Library/Frameworks/Foundation.framework/Headers \
-	-iframework $(SDKROOT)/System/Library/Frameworks \
-	-F$(FRAMEWORK_PATH) \
-	-F$(PRIVATE_FRAMEWORK_PATH) \
-	-F/System/Library/PrivateFrameworks \
-	$(CLI_OBJECTS) \
-	-L$(BUILD_DIR) -lmacwmfx \
-	$(PUBLIC_FRAMEWORKS) \
-	$(PRIVATE_FRAMEWORKS) \
-	-framework Foundation \
-	-framework AppKit \
-	-framework QuartzCore \
-	-framework Cocoa \
-	-framework CoreFoundation \
-	-framework CoreGraphics \
-	-framework IOSurface \
-	-framework SkyLight \
-	-Wl,-rpath,$(INSTALL_DIR) \
-	-fvisibility=default \
-	-o $@ \
-	$(LDFLAGS)
-
-# Install the dylib, CLI tool, and blacklist
-install: $(BUILD_DIR)/$(DYLIB_NAME) $(BUILD_DIR)/$(CLI_NAME)
-	@sudo mkdir -p $(INSTALL_DIR)
-	@sudo cp $(BUILD_DIR)/$(DYLIB_NAME) $(INSTALL_PATH)
-	@sudo chmod 755 $(INSTALL_PATH)
-	@sudo cp $(BUILD_DIR)/$(CLI_NAME) $(CLI_INSTALL_PATH)
-	@sudo chmod 755 $(CLI_INSTALL_PATH)
-	@if [ -f $(BLACKLIST_SOURCE) ]; then \
-		sudo cp $(BLACKLIST_SOURCE) $(BLACKLIST_DEST); \
-		sudo chmod 644 $(BLACKLIST_DEST); \
-		echo "Installed $(DYLIB_NAME), $(CLI_NAME), and blacklist"; \
+# Test target
+test: debug
+	@echo "Testing $(TARGET_NAME).dylib..."
+	@if [ -f "$(TARGET)" ]; then \
+		echo "✓ Build successful"; \
+		file "$(TARGET)"; \
+		otool -L "$(TARGET)" | head -10; \
 	else \
-		echo "Warning: $(BLACKLIST_SOURCE) not found"; \
-		echo "Installed $(DYLIB_NAME) and $(CLI_NAME)"; \
-	fi
-
-# Just install existing binaries without building
-install-only:
-	@if [ ! -f $(BUILD_DIR)/$(DYLIB_NAME) ]; then \
-		echo "Error: $(DYLIB_NAME) not found in build directory. Please build first."; \
+		echo "✗ Build failed"; \
 		exit 1; \
 	fi
-	@if [ ! -f $(BUILD_DIR)/$(CLI_NAME) ]; then \
-		echo "Error: $(CLI_NAME) not found in build directory. Please build first."; \
-		exit 1; \
-	fi
-	@sudo mkdir -p $(INSTALL_DIR)
-	@sudo cp $(BUILD_DIR)/$(DYLIB_NAME) $(INSTALL_PATH)
-	@sudo chmod 755 $(INSTALL_PATH)
-	@sudo cp $(BUILD_DIR)/$(CLI_NAME) $(CLI_INSTALL_PATH)
-	@sudo chmod 755 $(CLI_INSTALL_PATH)
-	@if [ -f $(BLACKLIST_SOURCE) ]; then \
-		sudo cp $(BLACKLIST_SOURCE) $(BLACKLIST_DEST); \
-		sudo chmod 644 $(BLACKLIST_DEST); \
-		echo "Installed $(DYLIB_NAME), $(CLI_NAME), and blacklist"; \
-	else \
-		echo "Warning: $(BLACKLIST_SOURCE) not found"; \
-		echo "Installed $(DYLIB_NAME) and $(CLI_NAME)"; \
-	fi
 
-# Test target that builds, installs, and relaunches test applications
-test: install
-	@echo "Clearing previous logs..."
-	@sudo log erase --all
-	@echo "Force quitting test applications..."
-	@pkill -9 "Spotify" 2>/dev/null || true
-	@pkill -9 "System Settings" 2>/dev/null || true
-	@pkill -9 "Chess" 2>/dev/null || true
-	@pkill -9 "soffice" 2>/dev/null || true
-	@pkill -9 "Brave Browser" 2>/dev/null || true
-	@pkill -9 "Beeper" 2>/dev/null || true
-	@pkill -9 "Safari" 2>/dev/null || true
-	@pkill -9 "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
-	@echo "Restarting ammonia injector..."
-	@sudo pkill -9 ammonia || true
-	@sleep 2
-	@sudo launchctl bootout system /Library/LaunchDaemons/com.bedtime.ammonia.plist 2>/dev/null || true
-	@sleep 2
-	@sudo launchctl bootstrap system /Library/LaunchDaemons/com.bedtime.ammonia.plist
-	@sleep 2
-	@echo "Ammonia injector restarted"
-	@echo "Waiting for system to stabilize..."
-	@sleep 5
-	@echo "Launching test applications..."
-	@open -a "Spotify" || echo "Failed to open Spotify"
-	@sleep 1
-	@open -a "System Settings" || echo "Failed to open System Settings"
-	@sleep 1
-	@open -a "Chess" || echo "Failed to open Chess"
-	@sleep 1
-	@open -a "LibreOffice" || echo "Failed to open LibreOffice"
-	@sleep 1
-	@open -a "Brave Browser" || echo "Failed to open Brave Browser"
-	@sleep 1
-	@open -a "Beeper" || echo "Failed to open Beeper"
-	@sleep 1
-	@open -a "Safari" || echo "Failed to open Safari"
-	@sleep 1
-	@echo "Test applications launched"
-	@echo "Checking logs..."
-	@log show --predicate 'subsystem == "com.aspauldingcode.macwmfx"' --debug --last 5m > test_output.log || true
-	@echo "Checking log for specific entries..."
-	@grep "Loaded" test_output.log || echo "No relevant log entries found."
-
-# Clean build files
+# Clean build artifacts
 clean:
-	@rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
 	@echo "Cleaned build directory"
 
-# Delete installed files
-delete:
-	@echo "Force quitting test applications..."
-	@pkill -9 "Spotify" 2>/dev/null || true
-	@pkill -9 "System Settings" 2>/dev/null || true
-	@pkill -9 "Chess" 2>/dev/null || true
-	@pkill -9 "soffice" 2>/dev/null || true
-	@pkill -9 "Brave Browser" 2>/dev/null || true
-	@pkill -9 "Beeper" 2>/dev/null || true
-	@pkill -9 "Safari" 2>/dev/null || true
-	@pkill -9 "Finder" 2>/dev/null && sleep 2 && open -a "Finder" || true
-	@sudo rm -f $(INSTALL_PATH)
-	@sudo rm -f $(CLI_INSTALL_PATH)
-	@sudo rm -f $(BLACKLIST_DEST)
-	@echo "Deleted $(DYLIB_NAME), $(CLI_NAME), and blacklist"
+# Install target
+install: release
+	@echo "Installing to /usr/local/lib/..."
+	sudo mkdir -p /usr/local/lib
+	sudo cp $(BUILD_DIR)/libmacwmfx_release.dylib /usr/local/lib/libmacwmfx.dylib
 
-# Uninstall
-uninstall:
-	@sudo rm -f $(INSTALL_PATH)
-	@sudo rm -f $(CLI_INSTALL_PATH)
-	@sudo rm -f $(BLACKLIST_DEST)
-	@echo "Uninstalled $(DYLIB_NAME), $(CLI_NAME), and blacklist"
-
-.PHONY: all clean install install-only uninstall test delete
+# Help target
+help:
+	@echo "macwmfx Build System"
+	@echo "==================="
+	@echo ""
+	@echo "Build Configurations:"
+	@echo "  make debug        - Debug build with all logging"
+	@echo "  make release      - Optimized release build"
+	@echo "  make minimal      - Minimal build with basic features only"
+	@echo "  make experimental - Debug build with experimental features"
+	@echo ""
+	@echo "Feature Control (can be combined with any config):"
+	@echo "  make debug ENABLE_WINDOW_SHADOWS=0    - Disable window shadows"
+	@echo "  make release ENABLE_DOCK_TWEAKS=0     - Disable dock tweaks"
+	@echo ""
+	@echo "Other Targets:"
+	@echo "  make test         - Build and test the debug version"
+	@echo "  make clean        - Clean build artifacts"
+	@echo "  make install      - Install release version system-wide"
+	@echo "  make help         - Show this help"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make debug                                    # Debug with all features"
+	@echo "  make minimal                                  # Minimal feature set"
+	@echo "  make release ENABLE_WINDOW_BLUR=0            # Release without blur"
+	@echo "  make experimental                             # All experimental features"

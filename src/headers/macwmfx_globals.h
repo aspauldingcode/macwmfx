@@ -16,6 +16,68 @@
 extern "C" {
 #endif
 
+// =============================================================================
+// FEATURE FLAGS - Enable/Disable specific features during development
+// =============================================================================
+
+// Debug and development flags
+#ifdef DEBUG
+    #define MACWMFX_DEBUG 1
+    #define MACWMFX_VERBOSE_LOGGING 1
+#else
+    #define MACWMFX_DEBUG 0
+    #define MACWMFX_VERBOSE_LOGGING 0
+#endif
+
+// Core feature flags - set to 0 to disable problematic features
+#define MACWMFX_ENABLE_WINDOW_BORDERS     1
+#define MACWMFX_ENABLE_WINDOW_SHADOWS     1
+#define MACWMFX_ENABLE_WINDOW_TRANSPARENCY 1
+#define MACWMFX_ENABLE_WINDOW_BLUR        1
+#define MACWMFX_ENABLE_TITLEBAR_TWEAKS    1
+#define MACWMFX_ENABLE_TRAFFIC_LIGHTS     1
+#define MACWMFX_ENABLE_RESIZE_LIMITS      1
+
+// Experimental features - easily disable if causing issues
+#define MACWMFX_ENABLE_DOCK_TWEAKS        1
+#define MACWMFX_ENABLE_MENUBAR_TWEAKS     1
+#define MACWMFX_ENABLE_SPACES_TWEAKS      1
+
+// Specific problematic features - can be disabled individually
+#define MACWMFX_ENABLE_ADVANCED_SHADOWS   0  // Disabled by default - experimental
+#define MACWMFX_ENABLE_CUSTOM_ANIMATIONS  0  // Disabled by default - may conflict
+
+// =============================================================================
+// DEBUG MACROS
+// =============================================================================
+
+#if MACWMFX_DEBUG
+    #define DLog(fmt, ...) NSLog(@"[macwmfx] " fmt, ##__VA_ARGS__)
+    #define VLog(fmt, ...) do { \
+        if (MACWMFX_VERBOSE_LOGGING) NSLog(@"[macwmfx:VERBOSE] " fmt, ##__VA_ARGS__); \
+    } while(0)
+#else
+    #define DLog(fmt, ...) do {} while(0)
+    #define VLog(fmt, ...) do {} while(0)
+#endif
+
+// =============================================================================
+// CONFIGURATION CONSTANTS
+// =============================================================================
+
+// Simple configuration constants - hardcoded defaults
+static const BOOL kMacWMFXEnabled = YES;
+static const CGFloat kDefaultBorderWidth = 2.0;
+static const CGFloat kDefaultCornerRadius = 8.0;
+static const CGFloat kDefaultTransparency = 0.95;
+
+// Core window behavior flags
+extern bool WindowDecorations;
+extern bool WindowHideShadow;
+
+// Global configuration for menubar height
+extern int menubarHeight;
+
 // Shared memory structure for IPC
 typedef struct {
     BOOL outlineEnabled;
@@ -175,12 +237,6 @@ extern BOOL gRunningFromCLI;
 - (void)loadConfig;
 - (NSColor *)colorFromHexString:(NSString *)hexString;
 @end
-
-extern bool WindowDecorations;
-extern bool WindowHideShadow;
-
-// Global configuration for menubar height
-extern int __height;
 
 #ifdef __cplusplus
 }

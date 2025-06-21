@@ -9,6 +9,36 @@ result*
 .ccls-cache/
 .ccls-cache/@*
 
-# macOS enshitifiers
+# macOS system files
 .DS_Store
-macwmfx/.DS_Store
+**/.DS_Store
+
+# Log files and temporary outputs
+*.log
+*.info
+*_output.log
+*_classdump.log
+windowserver.info
+test_output.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Xcode build files
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+
+# Compiled object files
+*.o
+*.obj
+*.so
+*.dylib
+*.a
+
+# Debug symbols
+*.dSYM/
