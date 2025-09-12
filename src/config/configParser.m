@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "../headers/macwmfx_globals.h"
+#import "../shared/macwmfx_logging.h"
 
 @interface ConfigParser ()
 @property (nonatomic, strong) NSFileHandle *configFileHandle;
@@ -37,33 +38,33 @@
 
 - (void)startFileMonitor {
     if (!gHotloadConfig.enabled) return;
-    
+
     // Stop existing monitor if any
     [self stopFileMonitor];
-    
+
     int fd = open([self.configPath UTF8String], O_EVTONLY);
     if (fd < 0) {
-        NSLog(@"[macwmfx] Failed to open config file for monitoring: %s", strerror(errno));
+        MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to open config file for monitoring: %s", strerror(errno));
         return;
     }
-    
+
     // Create dispatch source for monitoring file descriptor
     self.fileMonitor = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd,
                                             DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND,
                                             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
-    
+
     // Set up event handler
     ConfigParser *blockSelf = self;
     dispatch_source_set_event_handler(self.fileMonitor, ^{
         unsigned long flags = dispatch_source_get_data(blockSelf.fileMonitor);
-        
+
         // Add a small delay to ensure file is fully written
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND)) {
-                NSLog(@"[macwmfx] Config file changed, reloading...");
+                MACWMFX_LOG_INFO(macwmfx_log_config, "Config file changed, reloading...");
                 [blockSelf loadConfig];
                 [blockSelf notifyConfigChanged];
-                
+
                 // If file was deleted, restart monitor
                 if (flags & DISPATCH_VNODE_DELETE) {
                     [blockSelf startFileMonitor];
@@ -71,15 +72,15 @@
             }
         });
     });
-    
+
     // Set up cancellation handler
     dispatch_source_set_cancel_handler(self.fileMonitor, ^{
         close(fd);
     });
-    
+
     // Start monitoring
     dispatch_resume(self.fileMonitor);
-    NSLog(@"[macwmfx] Started file monitor for config changes");
+    MACWMFX_LOG_INFO(macwmfx_log_config, "Started file monitor for config changes");
 }
 
 - (void)stopFileMonitor {
@@ -92,7 +93,7 @@
 - (void)updateAllWindows {
     NSArray *windows = [NSApp windows];
     if (!windows) {
-        NSLog(@"[macwmfx] No windows found to update");
+        MACWMFX_LOG_INFO(macwmfx_log_config, "No windows found to update");
         return;
     }
 
@@ -112,7 +113,7 @@
             @try {
                 [window setHasShadow:gShadowConfig.enabled];
             } @catch (NSException *e) {
-                NSLog(@"[macwmfx] Failed to update window shadow: %@", e);
+                MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to update window shadow: %@", e);
             }
 
             // Update window borders if supported
@@ -120,7 +121,7 @@
                 @try {
                     [window performSelector:@selector(updateBorderStyle)];
                 } @catch (NSException *e) {
-                    NSLog(@"[macwmfx] Failed to update border style: %@", e);
+                    MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to update border style: %@", e);
                 }
             }
 
@@ -131,7 +132,7 @@
                     window.titleVisibility = NSWindowTitleHidden;
                     window.styleMask |= NSWindowStyleMaskFullSizeContentView;
                 } @catch (NSException *e) {
-                    NSLog(@"[macwmfx] Failed to update titlebar: %@", e);
+                    MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to update titlebar: %@", e);
                 }
             }
 
@@ -163,7 +164,7 @@
                         }
                     }
                 } @catch (NSException *e) {
-                    NSLog(@"[macwmfx] Failed to update traffic lights: %@", e);
+                    MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to update traffic lights: %@", e);
                 }
             }
 
@@ -171,35 +172,35 @@
             @try {
                 [window display];
             } @catch (NSException *e) {
-                NSLog(@"[macwmfx] Failed to display window: %@", e);
+                MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to display window: %@", e);
             }
 
         } @catch (NSException *e) {
-            NSLog(@"[macwmfx] Failed to update window: %@", e);
+            MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to update window: %@", e);
             continue;  // Skip to next window on error
         }
     }
 
     // Post notification for other parts of the app
     @try {
-        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"com.macwmfx.configChanged"
+        [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"com.aspauldingcode.macwmfx.configChanged"
                                                                     object:nil
                                                                   userInfo:nil
                                                         deliverImmediately:YES];
     } @catch (NSException *e) {
-        NSLog(@"[macwmfx] Failed to post config changed notification: %@", e);
+        MACWMFX_LOG_ERROR(macwmfx_log_config, "Failed to post config changed notification: %@", e);
     }
-    
-    NSLog(@"[macwmfx] Finished updating all windows");
+
+    MACWMFX_LOG_INFO(macwmfx_log_config, "Finished updating all windows");
 }
 
 - (NSColor *)colorFromHexString:(NSString *)hexString {
     if (!hexString) return nil;
-    
+
     unsigned int hexInt = 0;
     NSScanner *scanner = [NSScanner scannerWithString:hexString];
     [scanner scanHexInt:&hexInt];
-    
+
     return [NSColor colorWithRed:((hexInt & 0xFF0000) >> 16) / 255.0
                           green:((hexInt & 0x00FF00) >> 8) / 255.0
                            blue:(hexInt & 0x0000FF) / 255.0
@@ -208,39 +209,39 @@
 
 - (void)notifyConfigChanged {
     // Send notification on both centers to ensure delivery
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"com.macwmfx.configChanged"
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"com.aspauldingcode.macwmfx.configChanged"
                                                       object:nil];
-    
-    [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"com.macwmfx.configChanged"
+
+    [[NSDistributedNotificationCenter defaultCenter] postNotificationName:@"com.aspauldingcode.macwmfx.configChanged"
                                                                 object:nil
                                                               userInfo:nil
                                                     deliverImmediately:YES];
-    
-    NSLog(@"[macwmfx] Posted config changed notifications");
+
+    MACWMFX_LOG_INFO(macwmfx_log_config, "Posted config changed notifications");
 }
 
 - (void)loadConfig {
     NSData *configData = [NSData dataWithContentsOfFile:self.configPath];
-    
+
     if (!configData) {
-        NSLog(@"[macwmfx] No config found at %@", self.configPath);
+        MACWMFX_LOG_INFO(macwmfx_log_config, "No config found at %@", self.configPath);
         return;
     }
-    
+
     NSError *error = nil;
     NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&error];
-    
+
     if (error || !config) {
-        NSLog(@"[macwmfx] Error parsing config file: %@", error);
+        MACWMFX_LOG_ERROR(macwmfx_log_config, "Error parsing config file: %@", error);
         return;
     }
-    
+
     // Parse Hotload Configuration
     NSDictionary *hotloadConfig = config[@"hotload"];
     if (hotloadConfig) {
         gHotloadConfig.enabled = [hotloadConfig[@"enabled"] boolValue];
         gHotloadConfig.interval = [hotloadConfig[@"interval"] integerValue] ?: 1;
-        
+
         // Start or stop file monitoring based on config
         if (gHotloadConfig.enabled && !self.fileMonitor) {
             [self startFileMonitor];
@@ -248,7 +249,7 @@
             [self stopFileMonitor];
         }
     }
-    
+
     // Parse Window Configuration
     NSDictionary *windowConfig = config[@"window"];
     if (windowConfig) {
@@ -259,13 +260,13 @@
             gBlurConfig.passes = [blurConfig[@"passes"] integerValue] ?: gBlurConfig.passes;
             gBlurConfig.radius = [blurConfig[@"radius"] doubleValue] ?: gBlurConfig.radius;
         }
-        
+
         // Window Titlebar
         NSDictionary *titlebarConfig = windowConfig[@"titlebar"];
         if (titlebarConfig) {
             gTitlebarConfig.enabled = [titlebarConfig[@"enabled"] boolValue];
             gTitlebarConfig.forceClassic = [titlebarConfig[@"forceClassic"] boolValue];
-            
+
             // Parse custom color settings using active and inactive state colors
             NSDictionary *customColor = titlebarConfig[@"customColor"];
             if (customColor) {
@@ -285,7 +286,7 @@
             }
             gTitlebarConfig.style = [titlebarConfig[@"style"] copy] ?: @"modern";
             gTitlebarConfig.size = [titlebarConfig[@"size"] doubleValue] ?: 22.0;
-            
+
             // Custom Title
             NSDictionary *customTitleConfig = titlebarConfig[@"customTitle"];
             if (customTitleConfig) {
@@ -301,23 +302,23 @@
                     const char *utf8Title = [titleStr UTF8String];
                     if (utf8Title) {
                         gCustomTitleConfig.title = strdup(utf8Title);
-                        NSLog(@"[macwmfx] Set custom title to: %s", gCustomTitleConfig.title);
+                        MACWMFX_LOG_INFO(macwmfx_log_config, "Set custom title to: %s", gCustomTitleConfig.title);
                     }
                 }
             }
         }
-        
+
         // Window Traffic Lights
         NSDictionary *trafficLightsConfig = windowConfig[@"trafficLights"];
         if (trafficLightsConfig) {
             gTrafficLightsConfig.enabled = [trafficLightsConfig[@"enabled"] boolValue];
-            NSLog(@"[macwmfx] Traffic lights enabled: %d", gTrafficLightsConfig.enabled);
-            
+            MACWMFX_LOG_INFO(macwmfx_log_config, "Traffic lights enabled: %d", gTrafficLightsConfig.enabled);
+
             // Parse custom colors
             NSDictionary *customColor = trafficLightsConfig[@"customColor"];
             if (customColor) {
                 gTrafficLightsConfig.customColor.enabled = [customColor[@"enabled"] boolValue];
-                
+
                 // Parse active state colors
                 NSDictionary *activeColors = customColor[@"active"];
                 if (activeColors) {
@@ -325,7 +326,7 @@
                     gTrafficLightsConfig.customColor.active.yield = activeColors[@"yield"];
                     gTrafficLightsConfig.customColor.active.go = activeColors[@"go"];
                 }
-                
+
                 // Parse inactive state colors
                 NSDictionary *inactiveColors = customColor[@"inactive"];
                 if (inactiveColors) {
@@ -333,7 +334,7 @@
                     gTrafficLightsConfig.customColor.inactive.yield = inactiveColors[@"yield"];
                     gTrafficLightsConfig.customColor.inactive.go = inactiveColors[@"go"];
                 }
-                
+
                 // Parse hover state colors
                 NSDictionary *hoverColors = customColor[@"hover"];
                 if (hoverColors) {
@@ -341,10 +342,10 @@
                     gTrafficLightsConfig.customColor.hover.yield = hoverColors[@"yield"];
                     gTrafficLightsConfig.customColor.hover.go = hoverColors[@"go"];
                 }
-                
-                NSLog(@"[macwmfx] Traffic lights custom colors loaded for active/inactive/hover states");
+
+                MACWMFX_LOG_INFO(macwmfx_log_config, "Traffic lights custom colors loaded for active/inactive/hover states");
             }
-            
+
             gTrafficLightsConfig.style = [trafficLightsConfig[@"style"] copy] ?: @"macOS";
             gTrafficLightsConfig.shape = [trafficLightsConfig[@"shape"] copy] ?: @"circle";
             gTrafficLightsConfig.order = [trafficLightsConfig[@"order"] copy] ?: @"stop-yield-go";  // Default macOS order
@@ -352,13 +353,13 @@
             gTrafficLightsConfig.padding = [trafficLightsConfig[@"padding"] doubleValue] ?: 0;
             gTrafficLightsConfig.position = [trafficLightsConfig[@"position"] copy] ?: @"top-left";
         }
-        
+
         // Window Shadow
         NSDictionary *shadowConfig = windowConfig[@"shadow"];
         if (shadowConfig) {
             BOOL oldEnabled = gShadowConfig.enabled;
             gShadowConfig.enabled = [shadowConfig[@"enabled"] boolValue];
-            
+
             // Parse custom color settings
             NSDictionary *customColor = shadowConfig[@"customColor"];
             if (customColor) {
@@ -366,18 +367,18 @@
                 gShadowConfig.customColor.active = [customColor[@"active"] copy];
                 gShadowConfig.customColor.inactive = [customColor[@"inactive"] copy];
             }
-            
+
             if (oldEnabled != gShadowConfig.enabled) {
-                NSLog(@"[macwmfx] Shadow config changed from %d to %d", oldEnabled, gShadowConfig.enabled);
+                MACWMFX_LOG_INFO(macwmfx_log_config, "Shadow config changed from %d to %d", oldEnabled, gShadowConfig.enabled);
             }
         }
-        
+
         // Window Size Constraints
         NSDictionary *sizeConstraintsConfig = windowConfig[@"sizeConstraints"];
         if (sizeConstraintsConfig) {
             gWindowSizeConstraintsConfig.enabled = [sizeConstraintsConfig[@"enabled"] boolValue];
         }
-        
+
         // Window Outline
         NSDictionary *outlineConfig = windowConfig[@"outline"];
         if (outlineConfig) {
@@ -385,7 +386,7 @@
             gOutlineConfig.type = [outlineConfig[@"type"] copy];
             gOutlineConfig.width = [outlineConfig[@"width"] doubleValue];
             gOutlineConfig.cornerRadius = [outlineConfig[@"cornerRadius"] doubleValue];
-            
+
             // Parse custom color settings
             NSDictionary *customColor = outlineConfig[@"customColor"];
             if (customColor) {
@@ -394,15 +395,15 @@
                 gOutlineConfig.customColor.inactive = [self colorFromHexString:customColor[@"inactive"]];
                 gOutlineConfig.customColor.stacked = [self colorFromHexString:customColor[@"stacked"]];
             }
-            
-            NSLog(@"[macwmfx] Parsed outline config: enabled=%d, type=%@, width=%.1f, cornerRadius=%.1f, customColor.enabled=%d",
+
+            MACWMFX_LOG_INFO(macwmfx_log_config, "Parsed outline config: enabled=%d, type=%@, width=%.1f, cornerRadius=%.1f, customColor.enabled=%d",
                   gOutlineConfig.enabled,
                   gOutlineConfig.type,
                   gOutlineConfig.width,
                   gOutlineConfig.cornerRadius,
                   gOutlineConfig.customColor.enabled);
         }
-        
+
         // Window Transparency
         NSDictionary *transparencyConfig = windowConfig[@"transparency"];
         if (transparencyConfig) {
@@ -410,7 +411,7 @@
             gTransparencyConfig.value = [transparencyConfig[@"value"] doubleValue] ?: 0.5;
         }
     }
-    
+
     // System Color Scheme
     NSDictionary *systemColorConfig = config[@"systemColorScheme"];
     if (systemColorConfig) {
@@ -420,8 +421,8 @@
             [self parseColorScheme:systemColorConfig[@"colors"]];
         }
     }
-    
-    NSLog(@"[macwmfx] Config loaded from %@", self.configPath);
+
+    MACWMFX_LOG_INFO(macwmfx_log_config, "Config loaded from %@", self.configPath);
 }
 
 - (void)parseColorScheme:(NSDictionary *)colors {
@@ -445,14 +446,14 @@
 
 - (void)parseTrafficLightsConfig:(NSDictionary *)config {
     if (!config) return;
-    
+
     gTrafficLightsConfig.enabled = [config[@"enabled"] boolValue];
-    
+
     // Parse custom colors
     NSDictionary *customColor = config[@"customColor"];
     if (customColor) {
         gTrafficLightsConfig.customColor.enabled = [customColor[@"enabled"] boolValue];
-        
+
         // Parse active state colors
         NSDictionary *activeColors = customColor[@"active"];
         if (activeColors) {
@@ -460,7 +461,7 @@
             gTrafficLightsConfig.customColor.active.yield = activeColors[@"yield"];
             gTrafficLightsConfig.customColor.active.go = activeColors[@"go"];
         }
-        
+
         // Parse inactive state colors
         NSDictionary *inactiveColors = customColor[@"inactive"];
         if (inactiveColors) {
@@ -468,7 +469,7 @@
             gTrafficLightsConfig.customColor.inactive.yield = inactiveColors[@"yield"];
             gTrafficLightsConfig.customColor.inactive.go = inactiveColors[@"go"];
         }
-        
+
         // Parse hover state colors
         NSDictionary *hoverColors = customColor[@"hover"];
         if (hoverColors) {
@@ -476,10 +477,10 @@
             gTrafficLightsConfig.customColor.hover.yield = hoverColors[@"yield"];
             gTrafficLightsConfig.customColor.hover.go = hoverColors[@"go"];
         }
-        
-        NSLog(@"[macwmfx] Traffic lights custom colors loaded for active/inactive/hover states");
+
+        MACWMFX_LOG_INFO(macwmfx_log_config, "Traffic lights custom colors loaded for active/inactive/hover states");
     }
-    
+
     // Parse style settings
     gTrafficLightsConfig.style = [config[@"style"] copy] ?: @"macOS";
     gTrafficLightsConfig.shape = [config[@"shape"] copy] ?: @"circle";
@@ -487,8 +488,8 @@
     gTrafficLightsConfig.size = [config[@"size"] doubleValue] ?: 12.0;
     gTrafficLightsConfig.padding = [config[@"padding"] doubleValue] ?: 0;
     gTrafficLightsConfig.position = [config[@"position"] copy] ?: @"top-left";
-    
-    NSLog(@"[macwmfx] Parsed traffic lights config: enabled=%d, style=%@, shape=%@, order=%@, position=%@, size=%.1f, padding=%.1f",
+
+    MACWMFX_LOG_INFO(macwmfx_log_config, "Parsed traffic lights config: enabled=%d, style=%@, shape=%@, order=%@, position=%@, size=%.1f, padding=%.1f",
           gTrafficLightsConfig.enabled,
           gTrafficLightsConfig.style,
           gTrafficLightsConfig.shape,
