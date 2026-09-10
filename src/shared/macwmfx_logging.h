@@ -13,10 +13,15 @@ extern os_log_t macwmfx_log_window;
 extern os_log_t macwmfx_log_hook;
 extern os_log_t macwmfx_log_cli;
 extern os_log_t macwmfx_log_general;
+extern os_log_t macwmfx_log_styler;
+extern os_log_t macwmfx_log_engine;
 extern os_log_t macwmfx_log_titlebar;
 extern os_log_t macwmfx_log_traffic_lights;
 extern os_log_t macwmfx_log_shadow;
 extern os_log_t macwmfx_log_outline;
+extern os_log_t macwmfx_log_corners;
+extern os_log_t macwmfx_log_frame;
+extern os_log_t macwmfx_log_drag_effects;
 
 // Convenience macros for common log levels
 #define MACWMFX_LOG_INFO(category, ...) os_log_info(category, __VA_ARGS__)
@@ -28,11 +33,15 @@ extern os_log_t macwmfx_log_outline;
 
 // Legacy macros for backward compatibility - these will use os_log
 #ifdef MACWMFX_DEBUG
-    #define DLog(...) MACWMFX_LOG_INFO(macwmfx_log_general, __VA_ARGS__)
-    #define VLog(...) MACWMFX_LOG_DEBUG(macwmfx_log_general, __VA_ARGS__)
+#define DLog(...) MACWMFX_LOG_INFO(macwmfx_log_general, __VA_ARGS__)
+#define VLog(...) MACWMFX_LOG_DEBUG(macwmfx_log_general, __VA_ARGS__)
 #else
-    #define DLog(...) do {} while(0)
-    #define VLog(...) do {} while(0)
+#define DLog(...)                                                              \
+  do {                                                                         \
+  } while (0)
+#define VLog(...)                                                              \
+  do {                                                                         \
+  } while (0)
 #endif
 
 // Initialize logging - should be called once at startup

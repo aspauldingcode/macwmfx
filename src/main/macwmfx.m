@@ -7,10 +7,9 @@
 //
 
 #import "macwmfx.h"
-#import "../shared/headers/configParser.h"
-#import "../shared/headers/macwmfx_globals.h"
+#import "../shared/headers/macwmfx_Common.h"
 #import "../shared/macwmfx_logging.h"
-#import "module_loader.h"
+#import "macwmfx_Styler.h"
 
 // =============================================================================
 // MODULE IMPORTS - Control which modules are compiled
@@ -24,11 +23,13 @@
 // Window Management Modules
 // #import "../modules/windows/features/borders/WindowBorderModule.h"
 // #import "../modules/windows/features/windowShadow/DisableWindowShadow.m"
-// #import "../modules/windows/features/windowTrafficLights/disableTrafficLights.m"
+// #import
+// "../modules/windows/features/windowTrafficLights/disableTrafficLights.m"
 // #import "../modules/windows/features/windowTitlebar/DisableTitleBars.m"
 // #import "../modules/windows/features/windowTitlebar/TitlebarAesthetics.m"
 // #import "../modules/windows/features/windowTitlebar/ForceCustomTitle.m"
-// #import "../modules/windows/features/windowSizeContraints/DisableResizeConstraints.m"
+// #import
+// "../modules/windows/features/windowSizeContraints/DisableResizeConstraints.m"
 
 // Menubar Modules
 // #import "../modules/menubar/features/NoMenubar.m"
@@ -52,194 +53,111 @@
 // #import "../modules/windows/features/windowOutline/WindowBordersCenterline.m"
 // #import "../modules/windows/features/windowOutline/WindowBordersInline.mm"
 // #import "../modules/windows/features/windowOutline/WindowBordersOutline.mm"
-// #import "../modules/windows/features/windowOutline/DisableWindowCornerRadiusMask.m"
+// #import
+// "../modules/windows/features/windowOutline/DisableWindowCornerRadiusMask.m"
 // #import "../modules/windows/features/windowShadow/ShadowColor.mm"
 // #import "../modules/windows/features/windowTitlebar/DisableTitleBars.m"
 // #import "../modules/windows/features/windowTitlebar/ForceClassicTitlebars.m"
-// #import "../modules/windows/features/windowTrafficLights/TrafficLightsController.m"
+// #import
+// "../modules/windows/features/windowTrafficLights/TrafficLightsController.m"
 // #import "../modules/windows/features/windowTransparency/OpacityController.m"
 
 // =============================================================================
 
 @interface macwmfx ()
-@property (nonatomic, strong) ModuleLoader *moduleLoader;
-@property (nonatomic, assign) BOOL isRunning;
+@property(nonatomic, assign) BOOL isRunning;
 @end
 
 @implementation macwmfx
 
 + (instancetype)sharedInstance {
-    static macwmfx *sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[macwmfx alloc] init];
-    });
-    return sharedInstance;
+  static macwmfx *sharedInstance = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    sharedInstance = [[macwmfx alloc] init];
+  });
+  return sharedInstance;
 }
 
 - (instancetype)init {
-    self = [super init];
-    if (self) {
-        // Initialize logging system
-        macwmfx_logging_init();
-
-        self.moduleLoader = [ModuleLoader sharedLoader];
-        self.isRunning = NO;
-
-        MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx main module initialized");
-    }
-    return self;
+  self = [super init];
+  if (self) {
+    // Initialize logging system
+    macwmfx_logging_init();
+    self.isRunning = NO;
+    MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx main module initialized");
+  }
+  return self;
 }
 
 - (void)start {
-    if (self.isRunning) return;
+  if (self.isRunning)
+    return;
 
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Starting macwmfx");
-    [self loadConfiguration];
-    [self loadModules];
-    self.isRunning = YES;
-    MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx started successfully");
+  // Safety check: ensure we are in a GUI application
+  // Safety check: ensure we are in a GUI application
+  if (!NSApp) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self start];
+    });
+    return;
+  }
+
+  MACWMFX_LOG_INFO(macwmfx_log_general, "Starting macwmfx engine");
+  [self loadConfiguration];
+  [self setupWindowHooks];
+  self.isRunning = YES;
+
+  [macwmfxStyler refreshAllWindows];
+  MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx started successfully");
 }
 
 - (void)stop {
-    if (!self.isRunning) return;
+  if (!self.isRunning)
+    return;
 
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Stopping macwmfx");
-    [self unloadModules];
-    self.isRunning = NO;
-    MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx stopped");
+  MACWMFX_LOG_INFO(macwmfx_log_general, "Stopping macwmfx");
+  self.isRunning = NO;
+  MACWMFX_LOG_INFO(macwmfx_log_general, "macwmfx stopped");
 }
 
-- (BOOL)isRunning { return self.isRunning; }
-
-- (void)loadModules {
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Loading modules via ModuleLoader");
-
-    // DEVELOPMENT MODE: All modules are disabled by default
-    // Uncomment module imports above to enable specific modules
-
-    // Get available modules (those that were compiled in)
-    NSArray<NSString *> *availableModules = [self.moduleLoader getAvailableModules];
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Available modules: %@", availableModules);
-
-    // Load modules based on configuration
-    [self.moduleLoader loadModulesFromConfiguration:[self getCurrentConfig]];
-
-    NSArray<NSString *> *loadedModules = [self.moduleLoader getLoadedModules];
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Loaded %lu modules: %@", (unsigned long)loadedModules.count, loadedModules);
-}
-
-- (void)unloadModules {
-    NSArray<NSString *> *loadedModules = [self.moduleLoader getLoadedModules];
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Unloading %lu modules", (unsigned long)loadedModules.count);
-
-    for (NSString *moduleName in loadedModules) {
-        [self.moduleLoader unloadModule:moduleName];
-    }
-
-    MACWMFX_LOG_INFO(macwmfx_log_general, "All modules unloaded");
-}
-
-- (NSArray<id> *)getLoadedModules {
-    return [self.moduleLoader getLoadedModules];
-}
-
-- (NSArray<id> *)getAvailableModules {
-    return [self.moduleLoader getAvailableModules];
+- (BOOL)isRunning {
+  return _isRunning;
 }
 
 - (void)loadConfiguration {
-    MACWMFX_LOG_INFO(macwmfx_log_config, "Loading configuration");
-    [[ConfigParser sharedInstance] loadConfig];
-}
-
-- (NSDictionary *)getCurrentConfig {
-    // Convert global config variables to dictionary format
-    return @{
-        @"window": @{
-            @"shadow": @{@"enabled": @(gShadowConfig.enabled)},
-            @"trafficLights": @{@"enabled": @(gTrafficLightsConfig.enabled)},
-            @"titlebar": @{@"enabled": @(gTitlebarConfig.enabled)},
-            @"outline": @{@"enabled": @(gOutlineConfig.enabled)}
-        },
-        @"menubar": @{
-            @"noMenubar": @{@"enabled": @NO}, // Add to globals if needed
-            @"ribbonbar": @{@"enabled": @NO}  // Add to globals if needed
-        },
-        @"dock": @{
-            @"disableDock": @{@"enabled": @NO} // Add to globals if needed
-        },
-        @"spaces": @{
-            @"disableSpaces": @{@"enabled": @NO}, // Add to globals if needed
-            @"renameSpaces": @{@"enabled": @NO}   // Add to globals if needed
-        }
-    };
+  MACWMFX_LOG_INFO(macwmfx_log_config, "Loading macwmfx configuration");
+  [[ConfigParser sharedInstance] loadConfig];
 }
 
 - (void)reloadConfiguration {
-    MACWMFX_LOG_INFO(macwmfx_log_config, "Reloading configuration");
-    [self loadConfiguration];
-    [self.moduleLoader reloadAllModules];
-    [self updateAllWindows];
+  MACWMFX_LOG_INFO(macwmfx_log_config, "Reloading macwmfx configuration");
+  [self loadConfiguration];
+  [macwmfxStyler refreshAllWindows];
 }
 
-- (void)saveConfiguration { /* no-op */ }
-
-- (void)updateAllWindows {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        MACWMFX_LOG_DEBUG(macwmfx_log_window, "Updating all windows");
-        for (NSWindow *window in [NSApp windows]) [self updateWindow:window];
-    });
+- (void)setupWindowHooks {
+  [[NSNotificationCenter defaultCenter]
+      addObserver:self
+         selector:@selector(handleWindowDidBecomeKey:)
+             name:NSWindowDidBecomeKeyNotification
+           object:nil];
+  [[NSNotificationCenter defaultCenter]
+      addObserver:self
+         selector:@selector(handleWindowDidResignKey:)
+             name:NSWindowDidResignKeyNotification
+           object:nil];
 }
 
-- (void)updateWindow:(NSWindow *)window {
-    [self.moduleLoader updateAllWindows];
+- (void)handleWindowDidBecomeKey:(NSNotification *)notification {
+  [macwmfxStyler applyStyleToWindow:notification.object];
 }
 
-#pragma mark - Runtime Module Control
-
-- (BOOL)enableModule:(NSString *)moduleName {
-    return [self.moduleLoader enableModule:moduleName];
+- (void)handleWindowDidResignKey:(NSNotification *)notification {
+  [macwmfxStyler applyStyleToWindow:notification.object];
 }
 
-- (BOOL)disableModule:(NSString *)moduleName {
-    return [self.moduleLoader disableModule:moduleName];
-}
-
-- (BOOL)isModuleEnabled:(NSString *)moduleName {
-    return [self.moduleLoader isModuleLoaded:moduleName];
-}
-
-- (NSDictionary *)getModuleInfo:(NSString *)moduleName {
-    return [self.moduleLoader getModuleInfo:moduleName];
-}
-
-- (NSDictionary *)getAllModuleInfo {
-    return [self.moduleLoader getModuleConfigurations];
-}
-
-#pragma mark - Legacy Feature Methods (for compatibility)
-
-- (void)enableFeature:(NSString *)featureName {
-    [self enableModule:featureName];
-}
-
-- (void)disableFeature:(NSString *)featureName {
-    [self disableModule:featureName];
-}
-
-- (BOOL)isFeatureEnabled:(NSString *)featureName {
-    return [self isModuleEnabled:featureName];
-}
-
-- (void)setupSystemHooks {
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Setting up system hooks");
-    // This would be implemented if needed for legacy compatibility
-}
-
-- (void)removeSystemHooks {
-    MACWMFX_LOG_INFO(macwmfx_log_general, "Removing system hooks");
-    // This would be implemented if needed for legacy compatibility
+- (void)saveConfiguration { /* no-op */
 }
 
 @end

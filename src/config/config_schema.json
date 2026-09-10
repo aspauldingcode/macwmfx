@@ -1,0 +1,372 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "macwmfx Configuration",
+    "type": "object",
+    "properties": {
+        "theme": {
+            "type": "string"
+        },
+        "global": {
+            "$ref": "#/definitions/appearance"
+        },
+        "rules": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "match": {
+                        "type": "object",
+                        "properties": {
+                            "bundleIdentifier": {
+                                "type": "string"
+                            },
+                            "windowClass": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "state": {
+                                "enum": [
+                                    "active",
+                                    "inactive"
+                                ]
+                            }
+                        }
+                    },
+                    "override": {
+                        "$ref": "#/definitions/appearance"
+                    }
+                },
+                "required": [
+                    "match",
+                    "override"
+                ]
+            }
+        }
+    },
+    "definitions": {
+        "appearance": {
+            "type": "object",
+            "properties": {
+                "geometry": {
+                    "type": "object",
+                    "properties": {
+                        "cornerRadius": {
+                            "type": "number"
+                        },
+                        "asymmetricRadius": {
+                            "type": "object",
+                            "properties": {
+                                "topLeft": {
+                                    "type": "number"
+                                },
+                                "topRight": {
+                                    "type": "number"
+                                },
+                                "bottomLeft": {
+                                    "type": "number"
+                                },
+                                "bottomRight": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "margins": {
+                            "type": "object",
+                            "properties": {
+                                "top": {
+                                    "type": "number"
+                                },
+                                "bottom": {
+                                    "type": "number"
+                                },
+                                "left": {
+                                    "type": "number"
+                                },
+                                "right": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "contentPadding": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "materials": {
+                    "type": "object",
+                    "properties": {
+                        "vibrancy": {
+                            "enum": [
+                                "light",
+                                "dark",
+                                "ultra-thin",
+                                "sidebar",
+                                "menu",
+                                "popover",
+                                "hud"
+                            ]
+                        },
+                        "blurRadius": {
+                            "type": "number"
+                        },
+                        "opacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        "tint": {
+                            "type": "string"
+                        },
+                        "saturation": {
+                            "type": "number"
+                        },
+                        "noise": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "decoration": {
+                    "type": "object",
+                    "properties": {
+                        "border": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "thickness": {
+                                    "type": "number"
+                                },
+                                "material": {
+                                    "enum": [
+                                        "solid",
+                                        "frosted",
+                                        "metallic"
+                                    ]
+                                },
+                                "gradient": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "color": {
+                                                "type": "string"
+                                            },
+                                            "offset": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    }
+                                },
+                                "glow": {
+                                    "type": "object",
+                                    "properties": {
+                                        "radius": {
+                                            "type": "number"
+                                        },
+                                        "color": {
+                                            "type": "string"
+                                        },
+                                        "animated": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "shadow": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "radius": {
+                                    "type": "number"
+                                },
+                                "noise": {
+                                    "type": "number"
+                                },
+                                "stacks": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "radius": {
+                                                "type": "number"
+                                            },
+                                            "offset": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "number"
+                                                },
+                                                "minItems": 2,
+                                                "maxItems": 2
+                                            },
+                                            "opacity": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "chrome": {
+                    "type": "object",
+                    "properties": {
+                        "titlebar": {
+                            "type": "object",
+                            "properties": {
+                                "style": {
+                                    "enum": [
+                                        "unified",
+                                        "split",
+                                        "hidden"
+                                    ]
+                                },
+                                "height": {
+                                    "type": "number"
+                                },
+                                "transparent": {
+                                    "type": "boolean"
+                                },
+                                "floating": {
+                                    "boolean": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "detached": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "trafficLights": {
+                            "type": "object",
+                            "properties": {
+                                "position": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "number"
+                                    },
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                },
+                                "scale": {
+                                    "type": "number"
+                                },
+                                "spacing": {
+                                    "type": "number"
+                                },
+                                "customGlyphs": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                },
+                "motion": {
+                    "type": "object",
+                    "properties": {
+                        "dragEffect": {
+                            "type": "object",
+                            "properties": {
+                                "effect": {
+                                    "enum": [
+                                        "none",
+                                        "wobbly",
+                                        "inertia",
+                                        "scale",
+                                        "tilt"
+                                    ],
+                                    "description": "Window drag effect type"
+                                },
+                                "springStiffness": {
+                                    "type": "number",
+                                    "description": "Spring stiffness for wobbly effect (default: 7.0)"
+                                },
+                                "friction": {
+                                    "type": "number",
+                                    "description": "Friction for physics effects (default: 1.5)"
+                                },
+                                "mass": {
+                                    "type": "number",
+                                    "description": "Particle mass for physics (default: 15.0)"
+                                },
+                                "scaleFactor": {
+                                    "type": "number",
+                                    "description": "Scale factor for scale effect (default: 0.95)"
+                                },
+                                "tiltAngle": {
+                                    "type": "number",
+                                    "description": "Max tilt angle in degrees (default: 5.0)"
+                                },
+                                "gridWidth": {
+                                    "type": "integer",
+                                    "description": "Physics grid width (default: 8)"
+                                },
+                                "gridHeight": {
+                                    "type": "integer",
+                                    "description": "Physics grid height (default: 6)"
+                                },
+                                "enabled": {
+                                    "type": "boolean"
+                                }
+                            }
+                        },
+                        "animations": {
+                            "type": "object",
+                            "properties": {
+                                "open": {
+                                    "$ref": "#/definitions/animation"
+                                },
+                                "close": {
+                                    "$ref": "#/definitions/animation"
+                                },
+                                "focus": {
+                                    "$ref": "#/definitions/animation"
+                                },
+                                "resize": {
+                                    "$ref": "#/definitions/animation"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "animation": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "enum": [
+                        "scale-fade",
+                        "blur-in",
+                        "elastic",
+                        "slide"
+                    ]
+                },
+                "duration": {
+                    "type": "number"
+                },
+                "easing": {
+                    "enum": [
+                        "linear",
+                        "ease-in",
+                        "ease-out",
+                        "ease-in-out",
+                        "spring"
+                    ]
+                },
+                "damping": {
+                    "type": "number"
+                },
+                "stiffness": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

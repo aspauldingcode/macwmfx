@@ -100,11 +100,11 @@ CFLAGS = -Wall -Wextra \
 
 # Linker flags for main dylib
 LDFLAGS = -dynamiclib \
-    -install_name @rpath/libmacwmfx.dylib \
+    -install_name /var/ammonia/core/tweaks/libmacwmfx.dylib \
     -compatibility_version 1.0.0 \
     -current_version 1.0.0 \
     -framework Foundation \
-    -framework AppKit \
+    -weak_framework AppKit \
     -framework CoreGraphics \
     -framework ApplicationServices \
     -framework QuartzCore \
@@ -113,11 +113,11 @@ LDFLAGS = -dynamiclib \
 
 # Linker flags for server dylib
 LDFLAGS_SERVER = -dynamiclib \
-    -install_name @rpath/libmacwmfx_server.dylib \
+    -install_name /var/ammonia/core/tweaks/libmacwmfx_server.dylib \
     -compatibility_version 1.0.0 \
     -current_version 1.0.0 \
     -framework Foundation \
-    -framework AppKit \
+    -weak_framework AppKit \
     -framework CoreGraphics \
     -framework ApplicationServices \
     -framework QuartzCore \
@@ -137,21 +137,47 @@ TARGET_NAME = libmacwmfx_$(CONFIG)
 SERVER_TARGET_NAME = libmacwmfx_server_$(CONFIG)
 TARGET = $(BUILD_DIR)/$(TARGET_NAME).dylib
 SERVER_TARGET = $(BUILD_DIR)/$(SERVER_TARGET_NAME).dylib
+COMMON_LIB = $(BUILD_DIR)/libmacwmfx_common_$(CONFIG).a
 
 # CLI tool target
 CLI_TARGET = $(BUILD_DIR)/macwmfx
 
-# Source files (automatically find all .m, .mm, .c, .cpp files)
-SOURCES = $(shell find $(SOURCE_DIR) -name "*.m" -o -name "*.c" -o -name "*.mm" -o -name "*.cpp" ! -name "CLITool.m" ! -path "*/server/*")
+# COMMON source files (Shared between Main, Server, and CLI)
+COMMON_SOURCES = $(SOURCE_DIR)/shared/macwmfx_logging.m \
+                 $(SOURCE_DIR)/shared/macwmfx_xpc_types.m \
+                 $(SOURCE_DIR)/config/configParser.m \
+                 $(SOURCE_DIR)/main/macwmfx.m \
+                 $(SOURCE_DIR)/main/macwmfx_Styler.m \
+                 $(SOURCE_DIR)/modules/windows/features/frame/BorderFrameWindow.m \
+                 $(SOURCE_DIR)/modules/windows/features/corners/WindowCornerRadius.m \
+                 $(SOURCE_DIR)/modules/windows/features/corners/TitlebarDecorationViewSwizzle.m \
+                 $(SOURCE_DIR)/shared/ZKSwizzle/ZKSwizzle.m \
+                 $(SOURCE_DIR)/modules/windows/features/effects/WindowDragEffects.m
+
+# Main Dylib source files
+SOURCES = 
 OBJECTS = $(SOURCES:$(SOURCE_DIR)/%=$(BUILD_DIR)/%.o)
 
 # Server source files
 SERVER_SOURCES = $(shell find $(SOURCE_DIR)/server -name "*.m" -o -name "*.c" -o -name "*.mm" -o -name "*.cpp")
 SERVER_OBJECTS = $(SERVER_SOURCES:$(SOURCE_DIR)/%=$(BUILD_DIR)/%.o)
 
+# Common objects
+COMMON_OBJECTS = $(COMMON_SOURCES:$(SOURCE_DIR)/%=$(BUILD_DIR)/%.o)
+
 # CLI tool source
 CLI_SOURCE = $(SOURCE_DIR)/modules/CLITool.m
 CLI_OBJECT = $(BUILD_DIR)/modules/CLITool.m.o
+
+# Dependency files
+ALL_OBJECTS = $(OBJECTS) $(SERVER_OBJECTS) $(COMMON_OBJECTS) $(CLI_OBJECT)
+DEPS = $(ALL_OBJECTS:.o=.d)
+
+# Include dependency files if they exist
+-include $(DEPS)
+
+# Update CFLAGS to include dependency generation
+CFLAGS += -MMD -MP
 
 # =============================================================================
 # BUILD TARGETS
@@ -181,28 +207,22 @@ cli: $(CLI_TARGET)
 # Server target
 server: $(SERVER_TARGET)
 
+# Common library target
+$(COMMON_LIB): $(COMMON_OBJECTS) | $(BUILD_DIR)
+	$(call color_echo,$(BLUE)$(BOLD),Creating common static library $(COMMON_LIB)...)
+	libtool -static -o $@ $(COMMON_OBJECTS)
+
 # Main build target
-$(TARGET): $(OBJECTS) | $(BUILD_DIR)
+$(TARGET): $(OBJECTS) $(COMMON_LIB) | $(BUILD_DIR)
 	$(call color_echo,$(BLUE)$(BOLD),Linking $(TARGET_NAME).dylib ($(CONFIG) configuration)...)
-	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS) $(COMMON_LIB)
 	$(call color_echo,$(GREEN)$(BOLD),✓ Build complete: $@)
-	@echo ""
-	$(call color_echo,$(YELLOW),Build Configuration: $(CONFIG))
-	$(call color_echo,$(YELLOW),Debug Mode: $(MACWMFX_DEBUG) (ALWAYS ENABLED))
-	$(call color_echo,$(YELLOW),Verbose Logging: $(MACWMFX_VERBOSE_LOGGING))
-	@echo ""
-	$(call color_echo,$(CYAN),Source files compiled:)
-	@echo "$(SOURCES)" | tr ' ' '\n' | sed 's|$(SOURCE_DIR)/||' | sort
 
 # Server build target
-$(SERVER_TARGET): $(SERVER_OBJECTS) | $(BUILD_DIR)
+$(SERVER_TARGET): $(SERVER_OBJECTS) $(COMMON_LIB) | $(BUILD_DIR)
 	$(call color_echo,$(BLUE)$(BOLD),Linking $(SERVER_TARGET_NAME).dylib ($(CONFIG) configuration)...)
-	$(CC) $(LDFLAGS_SERVER) -o $@ $(SERVER_OBJECTS)
+	$(CC) $(LDFLAGS_SERVER) -o $@ $(SERVER_OBJECTS) $(COMMON_LIB)
 	$(call color_echo,$(GREEN)$(BOLD),✓ Server build complete: $@)
-	@echo ""
-	$(call color_echo,$(YELLOW),Server Configuration: $(CONFIG))
-	$(call color_echo,$(YELLOW),Debug Mode: $(MACWMFX_DEBUG) (ALWAYS ENABLED))
-	$(call color_echo,$(YELLOW),Verbose Logging: $(MACWMFX_VERBOSE_LOGGING))
 
 # Object file compilation rules
 $(BUILD_DIR)/%.m.o: $(SOURCE_DIR)/%.m | $(BUILD_DIR)
@@ -257,16 +277,16 @@ test: debug
 	@echo ""
 	$(call color_echo,$(BLUE)$(BOLD),Installing debug version for testing...)
 	$(call color_echo,$(YELLOW),Creating directories...)
-	@sudo mkdir -p /usr/local/lib /usr/local/bin /private/var/ammonia/core/tweaks
-	$(call color_echo,$(YELLOW),Installing debug dylib to /private/var/ammonia/core/tweaks/...)
-	@sudo cp $(BUILD_DIR)/libmacwmfx_debug.dylib /private/var/ammonia/core/tweaks/libmacwmfx.dylib
-	@sudo cp libmacwmfx.dylib.blacklist /private/var/ammonia/core/tweaks/
-	$(call color_echo,$(GREEN)$(BOLD),✓ Installed debug dylib to /private/var/ammonia/core/tweaks/libmacwmfx.dylib)
+	@sudo mkdir -p /usr/local/lib /usr/local/bin /var/ammonia/core/tweaks
+	$(call color_echo,$(YELLOW),Installing debug dylib to /var/ammonia/core/tweaks/...)
+	@sudo cp $(BUILD_DIR)/libmacwmfx_debug.dylib /var/ammonia/core/tweaks/libmacwmfx.dylib
+	@sudo cp libmacwmfx.dylib.blacklist /var/ammonia/core/tweaks/
+	$(call color_echo,$(GREEN)$(BOLD),✓ Installed debug dylib to /var/ammonia/core/tweaks/libmacwmfx.dylib)
 	@echo ""
-	$(call color_echo,$(YELLOW),Installing debug server dylib to /private/var/ammonia/core/tweaks/...)
-	@sudo cp $(BUILD_DIR)/libmacwmfx_server_debug.dylib /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib
-	@sudo cp libmacwmfx_server.dylib.blacklist /private/var/ammonia/core/tweaks/
-	$(call color_echo,$(GREEN)$(BOLD),✓ Installed debug server dylib to /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib)
+	$(call color_echo,$(YELLOW),Installing debug server dylib to /var/ammonia/core/tweaks/...)
+	@sudo cp $(BUILD_DIR)/libmacwmfx_server_debug.dylib /var/ammonia/core/tweaks/libmacwmfx_server.dylib
+	@sudo cp libmacwmfx_server.dylib.blacklist /var/ammonia/core/tweaks/
+	$(call color_echo,$(GREEN)$(BOLD),✓ Installed debug server dylib to /var/ammonia/core/tweaks/libmacwmfx_server.dylib)
 	@echo ""
 	$(call color_echo,$(YELLOW),Installing CLI tool to /usr/local/bin/...)
 	@sudo cp $(CLI_TARGET) /usr/local/bin/macwmfx
@@ -299,16 +319,16 @@ clean:
 install: all
 	$(call color_echo,$(BLUE)$(BOLD),Installing macwmfx (with debug enabled)...)
 	$(call color_echo,$(YELLOW),Creating directories...)
-	@sudo mkdir -p /usr/local/lib /usr/local/bin /private/var/ammonia/core/tweaks
-	$(call color_echo,$(YELLOW),Installing main dylib to /private/var/ammonia/core/tweaks/...)
-	@sudo cp $(TARGET) /private/var/ammonia/core/tweaks/libmacwmfx.dylib
-	@sudo cp libmacwmfx.dylib.blacklist /private/var/ammonia/core/tweaks/
-	$(call color_echo,$(GREEN)$(BOLD),✓ Installed main dylib to /private/var/ammonia/core/tweaks/libmacwmfx.dylib)
+	@sudo mkdir -p /usr/local/lib /usr/local/bin /var/ammonia/core/tweaks
+	$(call color_echo,$(YELLOW),Installing main dylib to /var/ammonia/core/tweaks/...)
+	@sudo cp $(TARGET) /var/ammonia/core/tweaks/libmacwmfx.dylib
+	@sudo cp libmacwmfx.dylib.blacklist /var/ammonia/core/tweaks/
+	$(call color_echo,$(GREEN)$(BOLD),✓ Installed main dylib to /var/ammonia/core/tweaks/libmacwmfx.dylib)
 	@echo ""
-	$(call color_echo,$(YELLOW),Installing server dylib to /private/var/ammonia/core/tweaks/...)
-	@sudo cp $(SERVER_TARGET) /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib
-	@sudo cp libmacwmfx_server.dylib.blacklist /private/var/ammonia/core/tweaks/
-	$(call color_echo,$(GREEN)$(BOLD),✓ Installed server dylib to /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib)
+	$(call color_echo,$(YELLOW),Installing server dylib to /var/ammonia/core/tweaks/...)
+	@sudo cp $(SERVER_TARGET) /var/ammonia/core/tweaks/libmacwmfx_server.dylib
+	@sudo cp libmacwmfx_server.dylib.blacklist /var/ammonia/core/tweaks/
+	$(call color_echo,$(GREEN)$(BOLD),✓ Installed server dylib to /var/ammonia/core/tweaks/libmacwmfx_server.dylib)
 	@echo ""
 	$(call color_echo,$(YELLOW),Installing CLI tool to /usr/local/bin/...)
 	@sudo cp $(CLI_TARGET) /usr/local/bin/macwmfx
@@ -331,10 +351,10 @@ uninstall:
 	$(call color_echo,$(GREEN)$(BOLD),✓ Removed CLI tool)
 	@echo ""
 	$(call color_echo,$(YELLOW),Removing macwmfx dylibs and blacklist files from /private/var/ammonia/core/tweaks/...)
-	@sudo rm -f /private/var/ammonia/core/tweaks/libmacwmfx.dylib
-	@sudo rm -f /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib
-	@sudo rm -f /private/var/ammonia/core/tweaks/libmacwmfx.dylib.blacklist
-	@sudo rm -f /private/var/ammonia/core/tweaks/libmacwmfx_server.dylib.blacklist
+	@sudo rm -f /var/ammonia/core/tweaks/libmacwmfx.dylib
+	@sudo rm -f /var/ammonia/core/tweaks/libmacwmfx_server.dylib
+	@sudo rm -f /var/ammonia/core/tweaks/libmacwmfx.dylib.blacklist
+	@sudo rm -f /var/ammonia/core/tweaks/libmacwmfx_server.dylib.blacklist
 	$(call color_echo,$(GREEN)$(BOLD),✓ Removed macwmfx dylibs and blacklist files)
 	@echo ""
 	$(call color_echo,$(YELLOW),Removing system configuration...)
@@ -403,12 +423,11 @@ fund:
 	$(call color_echo,$(GREEN)$(BOLD),✓ Funding link opened in browser)
 
 # CLI tool build target
-$(CLI_TARGET): $(CLI_OBJECT) $(BUILD_DIR)/config/configParser.m.o $(BUILD_DIR)/config/defineGlobals.m.o $(BUILD_DIR)/client/macwmfx_client.m.o $(BUILD_DIR)/server/macwmfx_server.m.o $(BUILD_DIR)/main/macwmfx.m.o $(BUILD_DIR)/main/module_loader.m.o $(BUILD_DIR)/modules/menubar/features/ribbonbar/HookUtil.m.o $(BUILD_DIR)/modules/windows/features/borders/WindowBorderModule.m.o $(BUILD_DIR)/shared/macwmfx_logging.m.o | $(BUILD_DIR)
+$(CLI_TARGET): $(CLI_OBJECT) $(BUILD_DIR)/client/macwmfx_client.m.o $(COMMON_LIB) | $(BUILD_DIR)
 	$(call color_echo,$(BLUE)$(BOLD),Linking macwmfx CLI tool...)
-	$(CC) -o $@ $(CLI_OBJECT) $(BUILD_DIR)/config/configParser.m.o $(BUILD_DIR)/config/defineGlobals.m.o $(BUILD_DIR)/client/macwmfx_client.m.o $(BUILD_DIR)/server/macwmfx_server.m.o $(BUILD_DIR)/main/macwmfx.m.o $(BUILD_DIR)/main/module_loader.m.o $(BUILD_DIR)/modules/menubar/features/ribbonbar/HookUtil.m.o $(BUILD_DIR)/modules/windows/features/borders/WindowBorderModule.m.o $(BUILD_DIR)/shared/macwmfx_logging.m.o -framework Foundation -framework AppKit -framework CoreGraphics -isysroot $(SDKROOT) $(ARCHS)
+	$(CC) -o $@ $(CLI_OBJECT) $(BUILD_DIR)/client/macwmfx_client.m.o $(COMMON_LIB) -framework Foundation -weak_framework AppKit -framework CoreGraphics -isysroot $(SDKROOT) $(ARCHS)
 	$(call color_echo,$(GREEN)$(BOLD),✓ CLI tool complete: $@)
 	@echo ""
 	$(call color_echo,$(CYAN),Usage:)
 	$(call color_echo,$(CYAN),  $@ --generate-config     # Create default configuration)
 	$(call color_echo,$(CYAN),  $@ --reload              # Restart all open apps)
-	$(call color_echo,$(CYAN),  $@ --observe-logs        # Observe macwmfx logs)

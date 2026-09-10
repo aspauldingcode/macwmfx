@@ -190,3 +190,4 @@ ContextStoreAgent
 com.apple.hiservices-xpcservice
 talagent
 Console
+com.apple.systempreferences

@@ -1,124 +1,145 @@
 {
-  "hotload": {
-    "enabled": true,
-    "interval": 1
-  },
-  "spaces": {
-    "enabled": true,
-    "instantFullscreen": false,
-    "behavior": "default",
-    "names": ["1", "2", "3", "4"]
-  },
-  "window": {
-    "blur": {
-      "enabled": false,
-      "passes": 1,
-      "radius": 10
-    },
-    "titlebar": {
-      "enabled": true,
-      "forceClassic": false,
-      "customTitle": {
-        "enabled": true,
-        "title": "My Custom Window Title"
+  "theme": "Liquid Glass",
+  "global": {
+    "geometry": {
+      "cornerRadius": 18.0,
+      "asymmetricRadius": {
+        "topLeft": 18.0,
+        "topRight": 18.0,
+        "bottomLeft": 0.0,
+        "bottomRight": 0.0
       },
-      "customColor": {
-        "enabled": false,
-        "activeBackground": "32302f",
-        "activeForeground": "fbf1c7",
-        "inactiveBackground": "32302f",
-        "inactiveForeground": "fbf1c7"
+      "margins": {
+        "top": 10,
+        "bottom": 10,
+        "left": 10,
+        "right": 10
       },
-      "style": "modern",
-      "size": 22
+      "contentPadding": 8.0
     },
-    "trafficLights": {
-      "enabled": true,
-      "customColor": {
+    "materials": {
+      "vibrancy": "ultra-thin",
+      "blurRadius": 40.0,
+      "opacity": 0.95,
+      "tint": "#ffffff",
+      "saturation": 1.2,
+      "noise": 0.02
+    },
+    "decoration": {
+      "border": {
         "enabled": true,
-        "active": {
-          "stop": "fb4934",
-          "yield": "fabd2f",
-          "go": "b8bb26"
-        },
-        "inactive": {
-          "stop": "d5c4a1",
-          "yield": "ebdbb2",
-          "go": "fbf1c7"
-        },
-        "hover": {
-          "stop": "fb4934",
-          "yield": "fabd2f",
-          "go": "b8bb26"
+        "thickness": 1.5,
+        "material": "frosted",
+        "gradient": [
+          {
+            "color": "#ffffff",
+            "offset": 0.0
+          },
+          {
+            "color": "#cccccc",
+            "offset": 1.0
+          }
+        ],
+        "glow": {
+          "radius": 5.0,
+          "color": "rgba(255, 255, 255, 0.3)",
+          "animated": true
         }
       },
-      "style": "macOS",
-      "shape": "circle",
-      "order": "stop-yield-go",
-      "size": 12,
-      "padding": 4,
-      "position": "top-right"
-    },
-    "shadow": {
-      "enabled": true,
-      "customColor": {
-        "enabled": false,
-        "active": "32302f",
-        "inactive": "00302f"
+      "shadow": {
+        "enabled": true,
+        "radius": 40.0,
+        "noise": 0.05,
+        "stacks": [
+          {
+            "radius": 10.0,
+            "offset": [
+              0,
+              5
+            ],
+            "opacity": 0.2
+          },
+          {
+            "radius": 40.0,
+            "offset": [
+              0,
+              20
+            ],
+            "opacity": 0.1
+          }
+        ]
       }
     },
-    "sizeConstraints": {
-      "enabled": true
-    },
-    "outline": {
-      "enabled": false,
-      "customColor": {
-        "enabled": true,
-        "active": "fbf1c7",
-        "inactive": "d5c4a1",
-        "stacked": "fb4934"
+    "chrome": {
+      "titlebar": {
+        "style": "unified",
+        "height": 38.0,
+        "transparent": true,
+        "floating": true,
+        "detached": false
       },
-      "cornerRadius": 40,
-      "type": "inline",
-      "width": 2
+      "trafficLights": {
+        "position": [
+          12.0,
+          12.0
+        ],
+        "scale": 1.1,
+        "spacing": 8.0,
+        "customGlyphs": false
+      }
     },
-    "transparency": {
-      "enabled": false,
-      "value": 0.5
+    "motion": {
+      "animations": {
+        "open": {
+          "type": "scale-fade",
+          "duration": 0.3,
+          "easing": "spring"
+        },
+        "resize": {
+          "type": "elastic",
+          "damping": 0.8,
+          "stiffness": 200
+        }
+      }
     }
   },
-  "menubar": {
-    "enabled": true,
-    "autohide": false,
-    "transparency": 0.8
-  },
-  "dock": {
-    "enabled": true,
-    "autohide": true,
-    "position": "bottom",
-    "size": 48
-  },
-  "customSystemColorScheme": {
-    "enabled": true,
-    "variant": "dark",
-    "slug": "gruvbox-dark-soft",
-    "colors": {
-      "base00": "32302f",
-      "base01": "3c3836",
-      "base02": "504945",
-      "base03": "665c54",
-      "base04": "bdae93",
-      "base05": "d5c4a1",
-      "base06": "ebdbb2",
-      "base07": "fbf1c7",
-      "base08": "fb4934",
-      "base09": "fe8019",
-      "base0A": "fabd2f",
-      "base0B": "b8bb26",
-      "base0C": "8ec07c",
-      "base0D": "83a598",
-      "base0E": "d3869b",
-      "base0F": "d65d0e"
+  "rules": [
+    {
+      "match": {
+        "bundleIdentifier": "com.apple.Terminal"
+      },
+      "override": {
+        "materials": {
+          "vibrancy": "dark",
+          "blurRadius": 60.0
+        },
+        "decoration": {
+          "border": {
+            "gradient": [
+              {
+                "color": "#00ff00",
+                "offset": 0.0
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "match": {
+        "state": "inactive"
+      },
+      "override": {
+        "materials": {
+          "saturation": 0.5,
+          "opacity": 0.8
+        },
+        "decoration": {
+          "shadow": {
+            "radius": 10.0
+          }
+        }
+      }
     }
-  }
+  ]
 }
